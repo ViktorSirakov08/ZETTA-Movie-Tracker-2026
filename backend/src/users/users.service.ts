@@ -1,0 +1,42 @@
+import { ConflictException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
+import { Role } from '../common/enums/role.enum';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
+  ) {}
+
+  async create(data: {
+    username: string;
+    password: string;
+    dateOfBirth: string;
+    role?: Role;
+  }): Promise<User> {
+    const existing = await this.findByUsername(data.username);
+    if (existing) {
+      throw new ConflictException('Username is already taken');
+    }
+
+    const user = this.usersRepository.create({
+      username: data.username,
+      password: data.password,
+      dateOfBirth: data.dateOfBirth,
+      role: data.role ?? Role.USER,
+    });
+
+    return this.usersRepository.save(user);
+  }
+
+  findByUsername(username: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { username } });
+  }
+
+  findById(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id } });
+  }
+}

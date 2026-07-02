@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: movie-tracker-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: movie_tracker
+    ports:
+      - '5433:5432'
+    volumes:
+      - movie-tracker-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d movie_tracker']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  adminer:
+    image: adminer:latest
+    container_name: movie-tracker-adminer
+    restart: unless-stopped
+    ports:
+      - '8081:8080'
+    depends_on:
+      - postgres
+
+volumes:
+  movie-tracker-db-data:
