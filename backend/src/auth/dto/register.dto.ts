@@ -10,6 +10,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { Genre } from '../../common/enums/genre.enum';
+import { IsValidDateOfBirth } from '../../common/validators/is-valid-date-of-birth.decorator';
 
 export class RegisterDto {
   @IsString()
@@ -27,6 +28,7 @@ export class RegisterDto {
   password: string;
 
   @IsDateString()
+  @IsValidDateOfBirth()
   dateOfBirth: string;
 
   @IsOptional()
