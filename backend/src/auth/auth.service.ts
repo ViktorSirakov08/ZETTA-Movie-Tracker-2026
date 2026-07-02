@@ -25,6 +25,7 @@ export class AuthService {
       password: hashedPassword,
       dateOfBirth: dto.dateOfBirth,
       role: Role.USER,
+      interests: dto.interests,
     });
   }
 

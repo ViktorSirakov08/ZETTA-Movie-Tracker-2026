@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Role } from '../../common/enums/role.enum';
+import { Genre } from '../../common/enums/genre.enum';
 
 @Entity('users')
 export class User {
@@ -25,6 +26,9 @@ export class User {
 
   @Column({ type: 'enum', enum: Role, default: Role.USER })
   role: Role;
+
+  @Column({ type: 'enum', enum: Genre, array: true, default: '{}' })
+  interests: Genre[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

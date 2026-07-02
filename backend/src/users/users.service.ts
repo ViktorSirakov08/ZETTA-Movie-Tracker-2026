@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { Role } from '../common/enums/role.enum';
+import { Genre } from '../common/enums/genre.enum';
 
 @Injectable()
 export class UsersService {
@@ -16,6 +17,7 @@ export class UsersService {
     password: string;
     dateOfBirth: string;
     role?: Role;
+    interests?: Genre[];
   }): Promise<User> {
     const existing = await this.findByUsername(data.username);
     if (existing) {
@@ -27,6 +29,7 @@ export class UsersService {
       password: data.password,
       dateOfBirth: data.dateOfBirth,
       role: data.role ?? Role.USER,
+      interests: data.interests ?? [],
     });
 
     return this.usersRepository.save(user);
