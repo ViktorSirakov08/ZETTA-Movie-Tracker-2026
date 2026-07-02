@@ -19,7 +19,7 @@ export function AuthLayout({ quote, quoteAuthor, children }: AuthLayoutProps) {
               🎬
             </span>
             <span className="auth-brand-name">
-              <strong>Movie</strong>Track
+              <strong>Movie</strong>Tracker
             </span>
           </div>
 
