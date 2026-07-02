@@ -4,7 +4,8 @@ import {
   ValidationOptions,
 } from 'class-validator';
 
-const EARLIEST_YEAR = 1900;
+const EARLIEST_YEAR = 1926;
+const LATEST_YEAR = 2016;
 
 export function IsValidDateOfBirth(validationOptions?: ValidationOptions) {
   return (object: object, propertyName: string) => {
@@ -24,13 +25,15 @@ export function IsValidDateOfBirth(validationOptions?: ValidationOptions) {
             return false;
           }
 
-          return (
-            date.getFullYear() >= EARLIEST_YEAR && date.getTime() <= Date.now()
-          );
+          const year = date.getFullYear();
+          return year >= EARLIEST_YEAR && year <= LATEST_YEAR;
         },
         defaultMessage(args: ValidationArguments): string {
           const date = new Date(args.value as string);
-          if (!Number.isNaN(date.getTime()) && date.getTime() > Date.now()) {
+          if (
+            !Number.isNaN(date.getTime()) &&
+            date.getFullYear() > LATEST_YEAR
+          ) {
             return 'Sorry, you are not born yet!';
           }
           if (
@@ -39,7 +42,7 @@ export function IsValidDateOfBirth(validationOptions?: ValidationOptions) {
           ) {
             return 'Sorry, you are too old!';
           }
-          return `dateOfBirth must be a real date between ${EARLIEST_YEAR} and today`;
+          return `dateOfBirth must be a real date between ${EARLIEST_YEAR} and ${LATEST_YEAR}`;
         },
       },
     });
