@@ -1,18 +1,22 @@
-import { ALL_INTEREST_KEYWORDS } from '../constants/interests';
+import { INTERESTS } from '../constants/interests';
 import './InterestPicker.css';
 
 interface InterestPickerProps {
   selectedKeywords: Set<string>;
   onToggle: (keyword: string) => void;
+  keywords?: readonly string[];
+  labels?: Record<string, string>;
 }
 
 export function InterestPicker({
   selectedKeywords,
   onToggle,
+  keywords = INTERESTS,
+  labels,
 }: InterestPickerProps) {
   return (
     <div className="interest-picker">
-      {ALL_INTEREST_KEYWORDS.map((keyword) => {
+      {keywords.map((keyword) => {
         const isSelected = selectedKeywords.has(keyword);
         return (
           <button
@@ -22,7 +26,7 @@ export function InterestPicker({
             aria-pressed={isSelected}
             onClick={() => onToggle(keyword)}
           >
-            {keyword}
+            {labels?.[keyword] ?? keyword}
           </button>
         );
       })}

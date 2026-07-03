@@ -1,4 +1,8 @@
-export const INTERESTS = [
+/**
+ * Broad content categories, used later to group/recommend media by genre.
+ * Not something a user directly picks or that gets stored on their profile.
+ */
+export const GENRE_NAMES = [
   'action',
   'adventure',
   'animation',
@@ -19,34 +23,13 @@ export const INTERESTS = [
   'western',
 ] as const;
 
-export type Interest = (typeof INTERESTS)[number];
-
-export const INTEREST_LABELS: Record<Interest, string> = {
-  action: 'Action',
-  adventure: 'Adventure',
-  animation: 'Animation',
-  comedy: 'Comedy',
-  crime: 'Crime',
-  documentary: 'Documentary',
-  drama: 'Drama',
-  family: 'Family',
-  fantasy: 'Fantasy',
-  history: 'History',
-  horror: 'Horror',
-  music: 'Music',
-  mystery: 'Mystery',
-  romance: 'Romance',
-  'sci-fi': 'Sci-Fi',
-  thriller: 'Thriller',
-  war: 'War',
-  western: 'Western',
-};
+export type GenreName = (typeof GENRE_NAMES)[number];
 
 /**
- * Mirrors backend/src/common/enums/interest.enum.ts INTEREST_KEYWORDS.
+ * Mirrors backend/src/common/constants/interest-names.ts GENRE_KEYWORDS.
  * Keep in sync manually since frontend/backend are separate packages.
  */
-export const INTEREST_KEYWORDS: Record<Interest, string[]> = {
+export const GENRE_KEYWORDS: Record<GenreName, string[]> = {
   action: ['action', 'fight', 'explosion', 'stunt', 'martial arts'],
   adventure: ['adventure', 'quest', 'expedition', 'journey', 'survival'],
   animation: ['animation', 'cartoon', 'anime'],
@@ -58,7 +41,7 @@ export const INTEREST_KEYWORDS: Record<Interest, string[]> = {
   fantasy: ['fantasy', 'magic', 'sword and sorcery', 'mythical'],
   history: ['history', 'period piece', 'war epic'],
   horror: ['horror', 'slasher', 'supernatural', 'zombie', 'monster'],
-  music: ['music', 'musical', 'concert', 'band'],
+  music: ['music', 'band'],
   mystery: ['mystery', 'whodunit', 'detective', 'crime', 'conspiracy'],
   romance: ['romance', 'love story', 'romantic comedy'],
   'sci-fi': ['sci-fi', 'space', 'alien', 'dystopia'],
@@ -67,33 +50,25 @@ export const INTEREST_KEYWORDS: Record<Interest, string[]> = {
   western: ['western', 'cowboy', 'outlaw', 'frontier'],
 };
 
-/** Every unique keyword across all interests, alphabetically sorted, for the interest picker UI. */
-export const ALL_INTEREST_KEYWORDS: string[] = Array.from(
-  new Set(Object.values(INTEREST_KEYWORDS).flat()),
+/** The specific tags a user can actually pick as their interests. */
+export const INTERESTS = Array.from(
+  new Set(Object.values(GENRE_KEYWORDS).flat()),
 ).sort((a, b) => a.localeCompare(b));
 
-/**
- * Reverse lookup: keyword -> the single interest it represents in the picker UI.
- * Some keywords appear under more than one interest in INTEREST_KEYWORDS (e.g. "mystery"
- * is listed under both crime and mystery) - that's fine for backend recommendation
- * matching, but for a UI where clicking one button should select exactly one interest,
- * each keyword must resolve to exactly one interest. An interest's own name always wins
- * that interest (pass 1); everything else is assigned first-come (pass 2).
- */
-export const KEYWORD_TO_INTEREST: Record<string, Interest> = (() => {
-  const map: Record<string, Interest> = {};
+export type Interest = string;
 
-  for (const interest of INTERESTS) {
-    map[interest] = interest;
-  }
+function toTitleCase(value: string): string {
+  return value
+    .split(' ')
+    .map((word) =>
+      word
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join('-'),
+    )
+    .join(' ');
+}
 
-  for (const interest of INTERESTS) {
-    for (const keyword of INTEREST_KEYWORDS[interest]) {
-      if (!(keyword in map)) {
-        map[keyword] = interest;
-      }
-    }
-  }
-
-  return map;
-})();
+export const INTEREST_LABELS: Record<string, string> = Object.fromEntries(
+  INTERESTS.map((interest) => [interest, toTitleCase(interest)]),
+);

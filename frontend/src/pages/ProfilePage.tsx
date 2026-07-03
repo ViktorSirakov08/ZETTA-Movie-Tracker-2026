@@ -6,13 +6,13 @@ import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
 import { ApiError, getMe, updateProfile, type AuthUser } from '../api/auth';
 import { clearSession, getToken, updateStoredUser } from '../lib/auth-storage';
-import { KEYWORD_TO_INTEREST, type Interest } from '../constants/interests';
+import { INTERESTS, INTEREST_LABELS } from '../constants/interests';
 
 export function ProfilePage() {
   const token = getToken();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [username, setUsername] = useState('');
-  const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(
+  const [selectedInterests, setSelectedInterests] = useState<Set<string>>(
     new Set(),
   );
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function ProfilePage() {
       .then((fresh) => {
         setUser(fresh);
         setUsername(fresh.username);
-        setSelectedKeywords(new Set(fresh.interests));
+        setSelectedInterests(new Set(fresh.interests));
       })
       .catch(() => {
         setError('Unable to load your profile.');
@@ -43,13 +43,13 @@ export function ProfilePage() {
     window.location.href = '/login';
   }
 
-  function toggleKeyword(keyword: string) {
-    setSelectedKeywords((prev) => {
+  function toggleInterest(interest: string) {
+    setSelectedInterests((prev) => {
       const next = new Set(prev);
-      if (next.has(keyword)) {
-        next.delete(keyword);
+      if (next.has(interest)) {
+        next.delete(interest);
       } else {
-        next.add(keyword);
+        next.add(interest);
       }
       return next;
     });
@@ -60,13 +60,7 @@ export function ProfilePage() {
     setError(null);
     setSuccess(false);
 
-    const interests: Interest[] = Array.from(
-      new Set(
-        Array.from(selectedKeywords)
-          .map((keyword) => KEYWORD_TO_INTEREST[keyword])
-          .filter((interest): interest is Interest => Boolean(interest)),
-      ),
-    );
+    const interests = Array.from(selectedInterests);
 
     setSubmitting(true);
     try {
@@ -130,8 +124,10 @@ export function ProfilePage() {
         <div className="field">
           <label>Interests</label>
           <InterestPicker
-            selectedKeywords={selectedKeywords}
-            onToggle={toggleKeyword}
+            selectedKeywords={selectedInterests}
+            onToggle={toggleInterest}
+            keywords={INTERESTS}
+            labels={INTEREST_LABELS}
           />
         </div>
 
