@@ -6,7 +6,7 @@ import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
 import { ApiError, getMe, updateProfile, type AuthUser } from '../api/auth';
 import { clearSession, getToken, updateStoredUser } from '../lib/auth-storage';
-import { KEYWORD_TO_GENRE, type Genre } from '../constants/genres';
+import { KEYWORD_TO_INTEREST, type Interest } from '../constants/interests';
 
 export function ProfilePage() {
   const token = getToken();
@@ -60,11 +60,11 @@ export function ProfilePage() {
     setError(null);
     setSuccess(false);
 
-    const interests: Genre[] = Array.from(
+    const interests: Interest[] = Array.from(
       new Set(
         Array.from(selectedKeywords)
-          .map((keyword) => KEYWORD_TO_GENRE[keyword])
-          .filter((genre): genre is Genre => Boolean(genre)),
+          .map((keyword) => KEYWORD_TO_INTEREST[keyword])
+          .filter((interest): interest is Interest => Boolean(interest)),
       ),
     );
 

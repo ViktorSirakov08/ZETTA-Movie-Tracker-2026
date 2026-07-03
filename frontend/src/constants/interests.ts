@@ -1,4 +1,4 @@
-export const GENRES = [
+export const INTERESTS = [
   'action',
   'adventure',
   'animation',
@@ -19,9 +19,9 @@ export const GENRES = [
   'western',
 ] as const;
 
-export type Genre = (typeof GENRES)[number];
+export type Interest = (typeof INTERESTS)[number];
 
-export const GENRE_LABELS: Record<Genre, string> = {
+export const INTEREST_LABELS: Record<Interest, string> = {
   action: 'Action',
   adventure: 'Adventure',
   animation: 'Animation',
@@ -43,10 +43,10 @@ export const GENRE_LABELS: Record<Genre, string> = {
 };
 
 /**
- * Mirrors backend/src/common/enums/genre.enum.ts GENRE_KEYWORDS.
+ * Mirrors backend/src/common/enums/interest.enum.ts INTEREST_KEYWORDS.
  * Keep in sync manually since frontend/backend are separate packages.
  */
-export const GENRE_KEYWORDS: Record<Genre, string[]> = {
+export const INTEREST_KEYWORDS: Record<Interest, string[]> = {
   action: ['action', 'fight', 'explosion', 'stunt', 'martial arts'],
   adventure: ['adventure', 'quest', 'expedition', 'journey', 'survival'],
   animation: ['animation', 'cartoon', 'anime'],
@@ -67,30 +67,30 @@ export const GENRE_KEYWORDS: Record<Genre, string[]> = {
   western: ['western', 'cowboy', 'outlaw', 'frontier'],
 };
 
-/** Every unique keyword across all genres, alphabetically sorted, for the interest picker UI. */
-export const INTEREST_KEYWORDS: string[] = Array.from(
-  new Set(Object.values(GENRE_KEYWORDS).flat()),
+/** Every unique keyword across all interests, alphabetically sorted, for the interest picker UI. */
+export const ALL_INTEREST_KEYWORDS: string[] = Array.from(
+  new Set(Object.values(INTEREST_KEYWORDS).flat()),
 ).sort((a, b) => a.localeCompare(b));
 
 /**
- * Reverse lookup: keyword -> the single genre it represents in the picker UI.
- * Some keywords appear under more than one genre in GENRE_KEYWORDS (e.g. "mystery"
+ * Reverse lookup: keyword -> the single interest it represents in the picker UI.
+ * Some keywords appear under more than one interest in INTEREST_KEYWORDS (e.g. "mystery"
  * is listed under both crime and mystery) - that's fine for backend recommendation
- * matching, but for a UI where clicking one button should select exactly one genre,
- * each keyword must resolve to exactly one genre. A genre's own name always wins
- * that genre (pass 1); everything else is assigned first-come (pass 2).
+ * matching, but for a UI where clicking one button should select exactly one interest,
+ * each keyword must resolve to exactly one interest. An interest's own name always wins
+ * that interest (pass 1); everything else is assigned first-come (pass 2).
  */
-export const KEYWORD_TO_GENRE: Record<string, Genre> = (() => {
-  const map: Record<string, Genre> = {};
+export const KEYWORD_TO_INTEREST: Record<string, Interest> = (() => {
+  const map: Record<string, Interest> = {};
 
-  for (const genre of GENRES) {
-    map[genre] = genre;
+  for (const interest of INTERESTS) {
+    map[interest] = interest;
   }
 
-  for (const genre of GENRES) {
-    for (const keyword of GENRE_KEYWORDS[genre]) {
+  for (const interest of INTERESTS) {
+    for (const keyword of INTEREST_KEYWORDS[interest]) {
       if (!(keyword in map)) {
-        map[keyword] = genre;
+        map[keyword] = interest;
       }
     }
   }

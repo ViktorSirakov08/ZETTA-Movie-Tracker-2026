@@ -1,4 +1,4 @@
-import { INTEREST_KEYWORDS } from '../constants/genres';
+import { ALL_INTEREST_KEYWORDS } from '../constants/interests';
 import './InterestPicker.css';
 
 interface InterestPickerProps {
@@ -12,7 +12,7 @@ export function InterestPicker({
 }: InterestPickerProps) {
   return (
     <div className="interest-picker">
-      {INTEREST_KEYWORDS.map((keyword) => {
+      {ALL_INTEREST_KEYWORDS.map((keyword) => {
         const isSelected = selectedKeywords.has(keyword);
         return (
           <button

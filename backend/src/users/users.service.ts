@@ -7,13 +7,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { Role } from '../common/enums/role.enum';
-import { Genre } from '../common/enums/genre.enum';
+import { InterestName } from '../common/constants/interest-names';
+import { InterestsService } from '../interests/interests.service';
+import { PublicUser } from './interfaces/public-user.interface';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly interestsService: InterestsService,
   ) {}
 
   async create(data: {
@@ -21,7 +24,7 @@ export class UsersService {
     password: string;
     dateOfBirth: string;
     role?: Role;
-    interests?: Genre[];
+    interests?: InterestName[];
   }): Promise<User> {
     const existing = await this.findByUsername(data.username);
     if (existing) {
@@ -33,10 +36,15 @@ export class UsersService {
       password: data.password,
       dateOfBirth: data.dateOfBirth,
       role: data.role ?? Role.USER,
-      interests: data.interests ?? [],
     });
+    const saved = await this.usersRepository.save(user);
 
-    return this.usersRepository.save(user);
+    await this.interestsService.setUserInterests(
+      saved.id,
+      data.interests ?? [],
+    );
+
+    return (await this.findByIdWithInterests(saved.id)) as User;
   }
 
   findByUsername(username: string): Promise<User | null> {
@@ -47,9 +55,16 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
+  findByIdWithInterests(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: { id },
+      relations: { userInterests: { interest: true } },
+    });
+  }
+
   async update(
     id: string,
-    data: { username?: string; interests?: Genre[] },
+    data: { username?: string; interests?: InterestName[] },
   ): Promise<User> {
     if (data.username) {
       const existing = await this.findByUsername(data.username);
@@ -58,11 +73,31 @@ export class UsersService {
       }
     }
 
-    const user = await this.usersRepository.preload({ id, ...data });
+    const user = await this.usersRepository.preload({
+      id,
+      ...(data.username !== undefined ? { username: data.username } : {}),
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    await this.usersRepository.save(user);
 
-    return this.usersRepository.save(user);
+    if (data.interests !== undefined) {
+      await this.interestsService.setUserInterests(id, data.interests);
+    }
+
+    return (await this.findByIdWithInterests(id)) as User;
+  }
+
+  toPublicUser(user: User): PublicUser {
+    return {
+      id: user.id,
+      username: user.username,
+      dateOfBirth: user.dateOfBirth,
+      role: user.role,
+      interests: (user.userInterests ?? []).map((ui) => ui.interest.name),
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }

@@ -1,4 +1,4 @@
-import type { Genre } from '../constants/genres';
+import type { Interest } from '../constants/interests';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 
@@ -7,7 +7,7 @@ export interface AuthUser {
   username: string;
   dateOfBirth: string;
   role: 'user' | 'admin';
-  interests: Genre[];
+  interests: Interest[];
 }
 
 export interface LoginResponse {
@@ -42,7 +42,7 @@ export function registerUser(data: {
   username: string;
   password: string;
   dateOfBirth: string;
-  interests: Genre[];
+  interests: Interest[];
 }): Promise<AuthUser> {
   return fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
@@ -70,7 +70,7 @@ export function getMe(token: string): Promise<AuthUser> {
 
 export function updateProfile(
   token: string,
-  data: { username?: string; interests?: Genre[] },
+  data: { username?: string; interests?: Interest[] },
 ): Promise<AuthUser> {
   return fetch(`${API_BASE_URL}/users/me`, {
     method: 'PATCH',

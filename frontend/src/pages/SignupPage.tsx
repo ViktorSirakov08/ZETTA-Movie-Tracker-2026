@@ -7,7 +7,7 @@ import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
 import { ApiError, loginUser, registerUser } from '../api/auth';
 import { saveSession } from '../lib/auth-storage';
-import { KEYWORD_TO_GENRE, type Genre } from '../constants/genres';
+import { KEYWORD_TO_INTEREST, type Interest } from '../constants/interests';
 
 export function SignupPage() {
   const navigate = useNavigate();
@@ -42,11 +42,11 @@ export function SignupPage() {
       return;
     }
 
-    const interests: Genre[] = Array.from(
+    const interests: Interest[] = Array.from(
       new Set(
         Array.from(selectedKeywords)
-          .map((keyword) => KEYWORD_TO_GENRE[keyword])
-          .filter((genre): genre is Genre => Boolean(genre)),
+          .map((keyword) => KEYWORD_TO_INTEREST[keyword])
+          .filter((interest): interest is Interest => Boolean(interest)),
       ),
     );
 

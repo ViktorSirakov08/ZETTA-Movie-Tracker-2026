@@ -2,12 +2,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { Role } from '../../common/enums/role.enum';
-import { Genre } from '../../common/enums/genre.enum';
+import { UserInterest } from '../../interests/entities/user-interest.entity';
 
 @Entity('users')
 export class User {
@@ -27,8 +28,8 @@ export class User {
   @Column({ type: 'enum', enum: Role, default: Role.USER })
   role: Role;
 
-  @Column({ type: 'enum', enum: Genre, array: true, default: '{}' })
-  interests: Genre[];
+  @OneToMany(() => UserInterest, (userInterest) => userInterest.user)
+  userInterests: UserInterest[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
