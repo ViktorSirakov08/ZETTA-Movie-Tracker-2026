@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import './App.css'
 
-type Category = 'Newest' | 'Highest Rated' | 'Most Popular'
+type Category = 'All' | 'Newest' | 'Highest Rated'
 type Genre =
   | 'All'
   | 'Action'
@@ -21,12 +21,15 @@ type MediaBlock = {
   title: string
   description: string
   rating: number
-  genre: Genre
-  category: Category
+  releaseYear: number
+  genres: Genre[]
   accent: 'sage' | 'panel' | 'light'
 }
 
-const categories: Category[] = ['Newest', 'Highest Rated', 'Most Popular']
+const categories: Exclude<Category, 'All'>[] = [
+  'Newest',
+  'Highest Rated'
+]
 
 const genres: Genre[] = [
   'All',
@@ -49,8 +52,8 @@ const mediaBlocks: MediaBlock[] = [
     title: 'Neon Harbor',
     description: 'A moody sci-fi mystery about a city that listens back.',
     rating: 9.1,
-    genre: 'Sci-Fi',
-    category: 'Newest',
+    releaseYear: 2026,
+    genres: ['Action', 'Adventure', 'Fantasy'],
     accent: 'sage',
   },
   {
@@ -58,8 +61,8 @@ const mediaBlocks: MediaBlock[] = [
     title: 'Glass Orchard',
     description: 'A tender family drama wrapped in an uneasy secret.',
     rating: 8.4,
-    genre: 'Drama',
-    category: 'Highest Rated',
+    releaseYear: 2024,
+    genres: ['Drama', 'Mystery'],
     accent: 'panel',
   },
   {
@@ -67,8 +70,8 @@ const mediaBlocks: MediaBlock[] = [
     title: 'Iron Satellite',
     description: 'Fast-paced survival on a failing orbital station.',
     rating: 9.3,
-    genre: 'Action',
-    category: 'Most Popular',
+    releaseYear: 2025,
+    genres: ['Action', 'Sci-Fi', 'Thriller'],
     accent: 'light',
   },
   {
@@ -76,8 +79,8 @@ const mediaBlocks: MediaBlock[] = [
     title: 'Quiet Signals',
     description: 'A documentary about memory, broadcasts, and the people behind them.',
     rating: 8.0,
-    genre: 'Documentary',
-    category: 'Newest',
+    releaseYear: 2023,
+    genres: ['Documentary', 'Mystery'],
     accent: 'panel',
   },
   {
@@ -85,8 +88,8 @@ const mediaBlocks: MediaBlock[] = [
     title: 'After the Bloom',
     description: 'A soft romance about timing, distance, and second chances.',
     rating: 8.6,
-    genre: 'Romance',
-    category: 'Highest Rated',
+    releaseYear: 2025,
+    genres: ['Romance', 'Drama'],
     accent: 'sage',
   },
   {
@@ -94,8 +97,8 @@ const mediaBlocks: MediaBlock[] = [
     title: 'Midnight Ledger',
     description: 'A tense crime story where every clue costs something.',
     rating: 9.0,
-    genre: 'Crime',
-    category: 'Most Popular',
+    releaseYear: 2026,
+    genres: ['Crime', 'Thriller', 'Mystery'],
     accent: 'light',
   },
 ]
@@ -104,46 +107,50 @@ const interestKeywords = ['space', 'family', 'mystery', 'heist', 'future']
 
 function App() {
   const [query, setQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<Category>('Newest')
+  const [selectedCategory, setSelectedCategory] =
+    useState<Exclude<Category, 'All'>>('Newest')
   const [selectedGenre, setSelectedGenre] = useState<Genre>('All')
   const [searchByInterests, setSearchByInterests] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const filteredBlocks = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
-    return mediaBlocks.filter((block) => {
+    return [...mediaBlocks]
+      .filter((block) => {
       const matchesQuery =
         normalizedQuery.length === 0 ||
-        [block.title, block.description, block.genre, block.category]
+        [block.title, block.description, block.genres.join(' '), String(block.releaseYear)]
           .join(' ')
           .toLowerCase()
           .includes(normalizedQuery)
 
-      const matchesCategory = block.category === selectedCategory
-      const matchesGenre = block.genre === selectedGenre || selectedGenre === 'All'
+      const matchesGenre =
+        selectedGenre === 'All' || block.genres.includes(selectedGenre)
       const matchesInterest = searchByInterests
         ? interestKeywords.some((keyword) =>
-            [block.title, block.description, block.genre]
+            [block.title, block.description, block.genres.join(' ')]
               .join(' ')
               .toLowerCase()
               .includes(keyword),
           )
         : true
 
-      return matchesQuery && matchesCategory && matchesGenre && matchesInterest
-    })
+      return matchesQuery && matchesGenre && matchesInterest
+      })
+      .sort((a, b) => {
+        if (selectedCategory === 'Highest Rated') {
+          return b.rating - a.rating || b.releaseYear - a.releaseYear
+        }
+
+        return b.releaseYear - a.releaseYear || b.rating - a.rating
+      })
   }, [query, searchByInterests, selectedCategory, selectedGenre])
 
   return (
     <main className="home-page">
       <header className="top-bar">
-        <div className="title-block">
-          <p className="eyebrow">Movie tracker</p>
-          <h1>Discover what to watch next</h1>
-          <p className="subtitle">
-            Browse a curated feed of media and narrow it down with one genre at a time.
-          </p>
-        </div>
+        <div className="topbar-spacer" />
 
         <label className="search-shell" aria-label="Search media">
           <span className="search-icon" aria-hidden="true">
@@ -158,49 +165,67 @@ function App() {
           />
         </label>
 
-        <aside className="filter-menu" aria-label="Filter menu">
-          <div className="filter-group">
-            <span className="filter-label">Categories</span>
-            <div className="chip-row">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  className={
-                    selectedCategory === category ? 'chip chip--active' : 'chip'
-                  }
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </button>
-              ))}
+        <aside className="filter-menu-shell" aria-label="Filter menu">
+          <button
+            type="button"
+            className={filtersOpen ? 'hamburger-button hamburger-button--open' : 'hamburger-button'}
+            onClick={() => setFiltersOpen((open) => !open)}
+            aria-expanded={filtersOpen}
+            aria-controls="filter-panel"
+            aria-label="Toggle filter menu"
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          <div
+            id="filter-panel"
+            className={filtersOpen ? 'filter-panel filter-panel--open' : 'filter-panel'}
+          >
+            <div className="filter-group">
+              <span className="filter-label">Categories</span>
+              <div className="chip-row">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={
+                      selectedCategory === category ? 'chip chip--active' : 'chip'
+                    }
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="filter-group">
-            <span className="filter-label">Genres</span>
-            <select
-              className="genre-select"
-              value={selectedGenre}
-              onChange={(event) => setSelectedGenre(event.target.value as Genre)}
-              aria-label="Select a genre"
-            >
-              {genres.map((genre) => (
-                <option key={genre} value={genre}>
-                  {genre}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="filter-group">
+              <span className="filter-label">Genres</span>
+              <select
+                className="genre-select"
+                value={selectedGenre}
+                onChange={(event) => setSelectedGenre(event.target.value as Genre)}
+                aria-label="Select a genre"
+              >
+                {genres.map((genre) => (
+                  <option key={genre} value={genre}>
+                    {genre}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <label className="interest-toggle">
-            <input
-              type="checkbox"
-              checked={searchByInterests}
-              onChange={(event) => setSearchByInterests(event.target.checked)}
-            />
-            <span>Search by interests</span>
-          </label>
+            <label className="interest-toggle">
+              <input
+                type="checkbox"
+                checked={searchByInterests}
+                onChange={(event) => setSearchByInterests(event.target.checked)}
+              />
+              <span>Search by interests</span>
+            </label>
+          </div>
         </aside>
       </header>
 
@@ -213,11 +238,19 @@ function App() {
               </div>
 
               <div className="media-copy">
-                <div className="media-head">
-                  <h2>{block.title}</h2>
-                  <span className="media-rating">{block.rating.toFixed(1)}</span>
-                </div>
+              <div className="media-head">
+                <h2>{block.title}</h2>
+                <span className="media-rating">{block.rating.toFixed(1)}</span>
+              </div>
+                <p className="release-year">Released {block.releaseYear}</p>
                 <p>{block.description}</p>
+                <div className="genre-row" aria-label="Genres">
+                  {block.genres.map((genre) => (
+                    <span className="genre-pill" key={genre}>
+                      {genre}
+                    </span>
+                  ))}
+                </div>
               </div>
             </article>
           ))}
