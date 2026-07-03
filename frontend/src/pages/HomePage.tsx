@@ -1,158 +1,74 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
+import { getAllMedia, type MediaItem } from '../api/media';
+import { ApiError } from '../api/client';
 
-type Category = 'All' | 'Newest' | 'Highest Rated';
-type Genre =
-  | 'All'
-  | 'Action'
-  | 'Adventure'
-  | 'Drama'
-  | 'Comedy'
-  | 'Crime'
-  | 'Documentary'
-  | 'Fantasy'
-  | 'Mystery'
-  | 'Romance'
-  | 'Sci-Fi'
-  | 'Thriller';
+type Category = 'Newest' | 'Highest Rated';
 
-type MediaBlock = {
-  id: number;
-  title: string;
-  description: string;
-  rating: number;
-  releaseYear: number;
-  genres: Genre[];
-  accent: 'sage' | 'panel' | 'light';
-};
-
-const categories: Exclude<Category, 'All'>[] = ['Newest', 'Highest Rated'];
-
-const genres: Genre[] = [
-  'All',
-  'Action',
-  'Adventure',
-  'Drama',
-  'Comedy',
-  'Crime',
-  'Documentary',
-  'Fantasy',
-  'Mystery',
-  'Romance',
-  'Sci-Fi',
-  'Thriller',
-];
-
-const mediaBlocks: MediaBlock[] = [
-  {
-    id: 1,
-    title: 'Neon Harbor',
-    description: 'A moody sci-fi mystery about a city that listens back.',
-    rating: 9.1,
-    releaseYear: 2026,
-    genres: ['Action', 'Adventure', 'Fantasy'],
-    accent: 'sage',
-  },
-  {
-    id: 2,
-    title: 'Glass Orchard',
-    description: 'A tender family drama wrapped in an uneasy secret.',
-    rating: 8.4,
-    releaseYear: 2024,
-    genres: ['Drama', 'Mystery'],
-    accent: 'panel',
-  },
-  {
-    id: 3,
-    title: 'Iron Satellite',
-    description: 'Fast-paced survival on a failing orbital station.',
-    rating: 9.3,
-    releaseYear: 2025,
-    genres: ['Action', 'Sci-Fi', 'Thriller'],
-    accent: 'light',
-  },
-  {
-    id: 4,
-    title: 'Quiet Signals',
-    description:
-      'A documentary about memory, broadcasts, and the people behind them.',
-    rating: 8.0,
-    releaseYear: 2023,
-    genres: ['Documentary', 'Mystery'],
-    accent: 'panel',
-  },
-  {
-    id: 5,
-    title: 'After the Bloom',
-    description: 'A soft romance about timing, distance, and second chances.',
-    rating: 8.6,
-    releaseYear: 2025,
-    genres: ['Romance', 'Drama'],
-    accent: 'sage',
-  },
-  {
-    id: 6,
-    title: 'Midnight Ledger',
-    description: 'A tense crime story where every clue costs something.',
-    rating: 9.0,
-    releaseYear: 2026,
-    genres: ['Crime', 'Thriller', 'Mystery'],
-    accent: 'light',
-  },
-];
-
-const interestKeywords = ['space', 'family', 'mystery', 'heist', 'future'];
+const categories: Category[] = ['Newest', 'Highest Rated'];
+const posterAccents = ['sage', 'panel', 'light'] as const;
 
 export function HomePage() {
   const token = getToken();
 
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] =
-    useState<Exclude<Category, 'All'>>('Newest');
-  const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
-  const [searchByInterests, setSearchByInterests] = useState(false);
+    useState<Category>('Newest');
+  const [selectedGenre, setSelectedGenre] = useState<string>('All');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const filteredBlocks = useMemo(() => {
+  useEffect(() => {
+    getAllMedia()
+      .then((items) => setMedia(items))
+      .catch((err) => {
+        setError(err instanceof ApiError ? err.message : 'Unable to load media.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const genreOptions = useMemo(() => {
+    const names = new Set<string>();
+    for (const item of media) {
+      for (const genre of item.genres) {
+        names.add(genre.name);
+      }
+    }
+    return ['All', ...Array.from(names).sort((a, b) => a.localeCompare(b))];
+  }, [media]);
+
+  const filteredMedia = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return [...mediaBlocks]
-      .filter((block) => {
+    return [...media]
+      .filter((item) => {
         const matchesQuery =
           normalizedQuery.length === 0 ||
-          [
-            block.title,
-            block.description,
-            block.genres.join(' '),
-            String(block.releaseYear),
-          ]
+          [item.name, item.description, item.genres.map((g) => g.name).join(' ')]
             .join(' ')
             .toLowerCase()
             .includes(normalizedQuery);
 
         const matchesGenre =
-          selectedGenre === 'All' || block.genres.includes(selectedGenre);
-        const matchesInterest = searchByInterests
-          ? interestKeywords.some((keyword) =>
-              [block.title, block.description, block.genres.join(' ')]
-                .join(' ')
-                .toLowerCase()
-                .includes(keyword),
-            )
-          : true;
+          selectedGenre === 'All' ||
+          item.genres.some((g) => g.name === selectedGenre);
 
-        return matchesQuery && matchesGenre && matchesInterest;
+        return matchesQuery && matchesGenre;
       })
       .sort((a, b) => {
         if (selectedCategory === 'Highest Rated') {
-          return b.rating - a.rating || b.releaseYear - a.releaseYear;
+          return (b.rating ?? 0) - (a.rating ?? 0);
         }
-
-        return b.releaseYear - a.releaseYear || b.rating - a.rating;
+        return (
+          new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+        );
       });
-  }, [query, searchByInterests, selectedCategory, selectedGenre]);
+  }, [media, query, selectedGenre, selectedCategory]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -232,54 +148,51 @@ export function HomePage() {
               <select
                 className="genre-select"
                 value={selectedGenre}
-                onChange={(event) =>
-                  setSelectedGenre(event.target.value as Genre)
-                }
+                onChange={(event) => setSelectedGenre(event.target.value)}
                 aria-label="Select a genre"
               >
-                {genres.map((genre) => (
+                {genreOptions.map((genre) => (
                   <option key={genre} value={genre}>
                     {genre}
                   </option>
                 ))}
               </select>
             </div>
-
-            <label className="interest-toggle">
-              <input
-                type="checkbox"
-                checked={searchByInterests}
-                onChange={(event) =>
-                  setSearchByInterests(event.target.checked)
-                }
-              />
-              <span>Search by interests</span>
-            </label>
           </div>
         </aside>
       </header>
 
       <section className="media-stage" aria-label="Media blocks">
+        {error && <p style={{ padding: '0 4px' }}>{error}</p>}
+
+        {!error && !loading && media.length === 0 && (
+          <p style={{ padding: '0 4px' }}>No media has been added yet.</p>
+        )}
+
         <div className="media-grid">
-          {filteredBlocks.map((block) => (
-            <article className="media-card" key={block.id}>
-              <div className={`media-poster media-poster--${block.accent}`}>
+          {filteredMedia.map((item, index) => (
+            <article className="media-card" key={item.id}>
+              <div
+                className={`media-poster media-poster--${posterAccents[index % posterAccents.length]}`}
+              >
                 <span className="poster-label">Picture</span>
               </div>
 
               <div className="media-copy">
                 <div className="media-head">
-                  <h2>{block.title}</h2>
+                  <h2>{item.name}</h2>
                   <span className="media-rating">
-                    {block.rating.toFixed(1)}
+                    {item.rating === null ? 'No rating' : item.rating.toFixed(1)}
                   </span>
                 </div>
-                <p className="release-year">Released {block.releaseYear}</p>
-                <p>{block.description}</p>
+                <p className="release-year">
+                  Released {new Date(item.releaseDate).getFullYear()}
+                </p>
+                <p>{item.description}</p>
                 <div className="genre-row" aria-label="Genres">
-                  {block.genres.map((genre) => (
-                    <span className="genre-pill" key={genre}>
-                      {genre}
+                  {item.genres.map((genre) => (
+                    <span className="genre-pill" key={genre.id}>
+                      {genre.name}
                     </span>
                   ))}
                 </div>

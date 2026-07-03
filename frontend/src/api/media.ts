@@ -18,6 +18,12 @@ export interface MediaItem {
   posterUrl: string | null;
 }
 
+export function getAllMedia(): Promise<MediaItem[]> {
+  return fetch(`${API_BASE_URL}/media`).then((res) =>
+    parseResponse<MediaItem[]>(res),
+  );
+}
+
 export function getWatchHistory(token: string): Promise<MediaItem[]> {
   return fetch(`${API_BASE_URL}/media/history`, {
     headers: { Authorization: `Bearer ${token}` },
