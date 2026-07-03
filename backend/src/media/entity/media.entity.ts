@@ -39,11 +39,11 @@ export class Media {
 
   @ManyToMany(() => Genre, (genre) => genre.media, { eager: true })
   @JoinTable({
-  name: 'media_genres', // the actual join table name in Postgres
-  joinColumn: { name: 'media_id', referencedColumnName: 'id' },
-  inverseJoinColumn: { name: 'genre_id', referencedColumnName: 'id' },
-})
-genres!: Genre[];
+    name: 'media_genres', // the actual join table name in Postgres
+    joinColumn: { name: 'media_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'genre_id', referencedColumnName: 'id' },
+  })
+  genres!: Genre[];
 
   @Column({ default: false })
   ageRestricted!: boolean;

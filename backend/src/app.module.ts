@@ -10,6 +10,9 @@ import { Interest } from './interests/entities/interest.entity';
 import { UserInterest } from './interests/entities/user-interest.entity';
 import { RatingsModule } from './ratings/ratings.module';
 import { Rating } from './ratings/entities/rating.entity';
+import { Media } from './media/entity/media.entity';
+import { Episode } from './media/entity/episode.entity';
+import { Genre } from './media/entity/genre.entity';
 
 @Module({
   imports: [
@@ -26,7 +29,7 @@ import { Rating } from './ratings/entities/rating.entity';
         username: configService.getOrThrow<string>('DATABASE_USERNAME'),
         password: configService.getOrThrow<string>('DATABASE_PASSWORD'),
         database: configService.getOrThrow<string>('DATABASE_NAME'),
-        entities: [User, Interest, UserInterest, Rating],
+        entities: [User, Interest, UserInterest, Rating, Media, Episode, Genre],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',
       }),

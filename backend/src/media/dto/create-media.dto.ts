@@ -27,7 +27,7 @@ export class CreateMediaDto {
 
   @IsArray()
   @IsUUID('4', { each: true })
-    genreIds!: string[];
+  genreIds!: string[];
 
   @IsBoolean()
   ageRestricted!: boolean;

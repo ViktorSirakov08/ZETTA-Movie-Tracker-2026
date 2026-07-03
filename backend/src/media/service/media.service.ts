@@ -8,7 +8,6 @@ import { CreateMediaDto } from '../dto/create-media.dto';
 import { UpdateMediaDto } from '../dto/update-media.dto';
 import { CreateEpisodeDto } from '../dto/create-episode.dto';
 
-
 @Injectable()
 export class MediaService {
   constructor(

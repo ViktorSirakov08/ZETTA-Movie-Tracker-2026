@@ -18,6 +18,26 @@
   min-height: 1px;
 }
 
+.profile-button {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-dark);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.profile-button:hover {
+  opacity: 0.9;
+}
+
 .search-shell {
   justify-self: center;
   width: 100%;
