@@ -3,12 +3,10 @@ import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
 import { getWatchHistory, type MediaItem } from '../api/media';
-import { ApiError } from '../api/client';
 
 type Category = 'Newest' | 'Highest Rated';
 
 const categories: Category[] = ['Newest', 'Highest Rated'];
-const posterAccents = ['sage', 'panel', 'light'] as const;
 
 export function HistoryPage() {
   const token = getToken();
@@ -30,7 +28,7 @@ export function HistoryPage() {
     getWatchHistory(token)
       .then((items) => setWatched(items))
       .catch((err) => {
-        setError(err instanceof ApiError ? err.message : 'Unable to load your history.');
+        setError(err instanceof Error ? err.message : 'Unable to load your history.');
       })
       .finally(() => setLoading(false));
   }, [token]);
@@ -80,86 +78,86 @@ export function HistoryPage() {
   return (
     <main className="home-page">
       <header className="top-bar">
-        <div className="nav-buttons">
-          <Link to="/home" className="profile-button">
-            Home
-          </Link>
-        </div>
+        <Link to="/home" className="profile-button">
+          Home
+        </Link>
 
-        <label className="search-shell" aria-label="Search history">
-          <span className="search-icon" aria-hidden="true">
-            ⌕
-          </span>
-          <input
-            type="search"
-            placeholder="Search your history"
-            aria-label="Search your history"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </label>
+        <div className="center-controls">
+          <label className="search-shell" aria-label="Search history">
+            <span className="search-icon" aria-hidden="true">
+              ⌕
+            </span>
+            <input
+              type="search"
+              placeholder="Search your history"
+              aria-label="Search your history"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
 
-        <aside className="filter-menu-shell" aria-label="Filter menu">
-          <button
-            type="button"
-            className={
-              filtersOpen
-                ? 'hamburger-button hamburger-button--open'
-                : 'hamburger-button'
-            }
-            onClick={() => setFiltersOpen((open) => !open)}
-            aria-expanded={filtersOpen}
-            aria-controls="filter-panel"
-            aria-label="Toggle filter menu"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
+          <aside className="filter-menu-shell" aria-label="Filter menu">
+            <button
+              type="button"
+              className={
+                filtersOpen
+                  ? 'hamburger-button hamburger-button--open'
+                  : 'hamburger-button'
+              }
+              onClick={() => setFiltersOpen((open) => !open)}
+              aria-expanded={filtersOpen}
+              aria-controls="filter-panel"
+              aria-label="Toggle filter menu"
+            >
+              <span />
+              <span />
+              <span />
+            </button>
 
-          <div
-            id="filter-panel"
-            className={
-              filtersOpen ? 'filter-panel filter-panel--open' : 'filter-panel'
-            }
-          >
-            <div className="filter-group">
-              <span className="filter-label">Categories</span>
-              <div className="chip-row">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    className={
-                      selectedCategory === category
-                        ? 'chip chip--active'
-                        : 'chip'
-                    }
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {category}
-                  </button>
-                ))}
+            <div
+              id="filter-panel"
+              className={
+                filtersOpen ? 'filter-panel filter-panel--open' : 'filter-panel'
+              }
+            >
+              <div className="filter-group">
+                <span className="filter-label">Categories</span>
+                <div className="chip-row">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      className={
+                        selectedCategory === category
+                          ? 'chip chip--active'
+                          : 'chip'
+                      }
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filter-group">
+                <span className="filter-label">Genres</span>
+                <select
+                  className="genre-select"
+                  value={selectedGenre}
+                  onChange={(event) => setSelectedGenre(event.target.value)}
+                  aria-label="Select a genre"
+                >
+                  {genreOptions.map((genre) => (
+                    <option key={genre} value={genre}>
+                      {genre}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
-
-            <div className="filter-group">
-              <span className="filter-label">Genres</span>
-              <select
-                className="genre-select"
-                value={selectedGenre}
-                onChange={(event) => setSelectedGenre(event.target.value)}
-                aria-label="Select a genre"
-              >
-                {genreOptions.map((genre) => (
-                  <option key={genre} value={genre}>
-                    {genre}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </aside>
+          </aside>
+        </div>
       </header>
 
       <section className="media-stage" aria-label="Watched media">
@@ -172,19 +170,21 @@ export function HistoryPage() {
         )}
 
         <div className="media-grid">
-          {filtered.map((item, index) => (
+          {filtered.map((item) => (
             <article className="media-card" key={item.id}>
-              <div
-                className={`media-poster media-poster--${posterAccents[index % posterAccents.length]}`}
-              >
-                <span className="poster-label">Picture</span>
+              <div className="media-poster">
+                {item.posterUrl ? (
+                  <img src={item.posterUrl} alt={item.name} />
+                ) : (
+                  <span className="poster-label">Picture</span>
+                )}
               </div>
 
               <div className="media-copy">
                 <div className="media-head">
                   <h2>{item.name}</h2>
                   <span className="media-rating">
-                    {item.rating === null ? 'No rating' : item.rating.toFixed(1)}
+                    {item.rating !== null ? item.rating.toFixed(1) : 'No Rating'}
                   </span>
                 </div>
                 <p className="release-year">

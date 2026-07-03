@@ -15,18 +15,6 @@
   min-height: 64px;
 }
 
-.center-controls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.nav-buttons {
-  justify-self: start;
-  display: flex;
-  gap: 12px;
-}
-
 .profile-button {
   position: absolute;
   left: 0;

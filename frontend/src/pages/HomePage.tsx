@@ -97,14 +97,12 @@ export function HomePage() {
   return (
     <main className="home-page">
       <header className="top-bar">
-        <div className="nav-buttons">
-          <Link to="/profile" className="profile-button">
-            Profile
-          </Link>
-          <Link to="/history" className="history-button">
-            History
-          </Link>
-        </div>
+        <Link to="/profile" className="profile-button">
+          Profile
+        </Link>
+        <Link to="/history" className="history-button">
+          History
+        </Link>
 
         {/* Grouping the search and filter elements together */}
         <div className="center-controls">
@@ -204,6 +202,12 @@ export function HomePage() {
       </header>
 
       <section className="media-stage" aria-label="Media blocks">
+        {error && <p style={{ padding: '0 4px' }}>{error}</p>}
+
+        {!error && !loading && media.length === 0 && (
+          <p style={{ padding: '0 4px' }}>No media has been added yet.</p>
+        )}
+
         <div className="media-grid">
           {filteredMedia.map((item) => (
             <article className="media-card" key={item.id}>
