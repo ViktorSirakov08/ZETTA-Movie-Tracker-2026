@@ -8,23 +8,37 @@
 }
 
 .top-bar {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 1.2fr) minmax(290px, 0.9fr);
-  gap: 20px;
-  align-items: center;
-}
-
-.topbar-spacer {
-  min-height: 1px;
-}
-
-.nav-buttons {
-  justify-self: start;
+  position: relative;
   display: flex;
-  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
 }
 
 .profile-button {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-dark);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.history-button {
+  position: absolute;
+  left: 120px;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -43,8 +57,34 @@
   opacity: 0.9;
 }
 
+.add-media-button {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #4f5d40;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 12px 22px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.add-media-button:hover {
+  opacity: 0.85;
+}
+
+.add-media-button:focus-visible {
+  outline: 2px solid #4f5d40;
+  outline-offset: 2px;
+}
+
 .search-shell {
-  justify-self: center;
   width: 100%;
   max-width: 560px;
   min-height: 64px;
@@ -76,13 +116,10 @@
 }
 
 .filter-menu-shell {
-  justify-self: end;
   position: relative;
-  width: 100%;
-  max-width: 360px;
   min-height: 44px;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
 }
 
 .hamburger-button {
@@ -90,7 +127,7 @@
   height: 44px;
   border: 1px solid rgba(79, 93, 64, 0.16);
   border-radius: 14px;
-  background: rgba(241, 242, 235, 0.88);
+  background: rgba(255, 255, 255, 0.7);
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
@@ -116,6 +153,14 @@
 
 .hamburger-button--open span:nth-child(3) {
   transform: translateY(-7px) rotate(-45deg);
+}
+
+.center-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 620px;
 }
 
 .filter-panel {
@@ -186,7 +231,7 @@
   min-height: 46px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
-  background: rgba(241, 242, 235, 0.9);
+  background: rgba(255, 255, 255, 0.7);
   padding: 0 14px;
   color: var(--text);
   outline: none;
@@ -231,25 +276,27 @@
 }
 
 .media-poster {
-  min-height: 200px;
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
   display: flex;
-  align-items: flex-end;
-  padding: 18px;
-}
-
-.media-poster--sage {
-  background: linear-gradient(135deg, rgba(164, 194, 165, 0.95), rgba(79, 93, 64, 0.75));
-}
-
-.media-poster--panel {
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(135deg, rgba(216, 218, 211, 0.95), rgba(164, 194, 165, 0.45));
 }
 
-.media-poster--light {
-  background: linear-gradient(135deg, rgba(241, 242, 235, 0.98), rgba(216, 218, 211, 0.95));
+.media-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 
 .poster-label {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -259,6 +306,7 @@
   color: var(--sage-dark);
   font-size: 0.82rem;
   font-weight: 600;
+  z-index: 2;
 }
 
 .media-copy {
@@ -319,15 +367,46 @@
   font-weight: 600;
 }
 
+.home-page-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  font-size: 1.05rem;
+  color: var(--sage-dark);
+}
+
 @media (max-width: 1200px) {
   .top-bar {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .profile-button,
+  .add-media-button {
+    position: static;
+    transform: none;
+    align-self: flex-start;
+  }
+
+  .add-media-button {
+    align-self: flex-end;
+  }
+
+  .center-controls {
+    flex-direction: column;
+    width: 100%;
+    gap: 16px;
   }
 
   .search-shell,
   .filter-menu-shell {
-    justify-self: stretch;
+    width: 100%;
     max-width: none;
+  }
+
+  .filter-menu-shell {
+    justify-content: flex-end;
   }
 
   .filter-panel {
@@ -349,6 +428,17 @@
 @media (max-width: 760px) {
   .home-page {
     padding: 16px;
+  }
+
+  .top-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .profile-button,
+  .add-media-button {
+    align-self: stretch;
+    text-align: center;
   }
 
   .media-grid {

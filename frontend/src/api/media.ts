@@ -1,31 +1,56 @@
-import { API_BASE_URL, parseResponse } from './client';
+import type { Media } from '../types/media';
 
-export interface MediaGenre {
-  id: string;
-  name: string;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+
+export type MediaItem = Media;
+
+export async function fetchMedia(): Promise<Media[]> {
+  const res = await fetch(`${API_BASE_URL}/media`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch media: ${res.status}`);
+  }
+  return res.json();
 }
 
-export interface MediaItem {
-  id: string;
-  type: 'MOVIE' | 'SERIES';
-  name: string;
-  releaseDate: string;
-  rating: number | null;
-  description: string;
-  genres: MediaGenre[];
-  ageRestricted: boolean;
-  durationMinutes: number | null;
-  posterUrl: string | null;
+export async function getWatchHistory(token: string): Promise<Media[]> {
+  const res = await fetch(`${API_BASE_URL}/media/history`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to fetch watch history: ${res.status}`);
+  }
+
+  return res.json();
 }
 
-export function getAllMedia(): Promise<MediaItem[]> {
-  return fetch(`${API_BASE_URL}/media`).then((res) =>
-    parseResponse<MediaItem[]>(res),
-  );
-}
-
-export function getWatchHistory(token: string): Promise<MediaItem[]> {
-  return fetch(`${API_BASE_URL}/media/history`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then((res) => parseResponse<MediaItem[]>(res));
+export async function createMedia(
+  token: string,
+  data: {
+    type: 'MOVIE' | 'SERIES';
+    name: string;
+    releaseDate: string;
+    description: string;
+    genreIds: string[];
+    ageRestricted: boolean;
+    durationMinutes?: number;
+    posterUrl?: string;
+  },
+): Promise<Media> {
+  const res = await fetch(`${API_BASE_URL}/media`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to create media: ${res.status}`);
+  }
+  return res.json();
 }
