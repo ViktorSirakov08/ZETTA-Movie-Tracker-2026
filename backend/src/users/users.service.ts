@@ -47,7 +47,17 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
-  async update(id: string, data: { interests?: Genre[] }): Promise<User> {
+  async update(
+    id: string,
+    data: { username?: string; interests?: Genre[] },
+  ): Promise<User> {
+    if (data.username) {
+      const existing = await this.findByUsername(data.username);
+      if (existing && existing.id !== id) {
+        throw new ConflictException('Username is already taken');
+      }
+    }
+
     const user = await this.usersRepository.preload({ id, ...data });
     if (!user) {
       throw new NotFoundException('User not found');

@@ -17,6 +17,10 @@ export function getStoredUser(): AuthUser | null {
   return raw ? (JSON.parse(raw) as AuthUser) : null;
 }
 
+export function updateStoredUser(user: AuthUser): void {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
 export function clearSession(): void {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);

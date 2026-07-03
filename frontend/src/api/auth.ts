@@ -61,3 +61,23 @@ export function loginUser(data: {
     body: JSON.stringify(data),
   }).then((res) => parseResponse<LoginResponse>(res));
 }
+
+export function getMe(token: string): Promise<AuthUser> {
+  return fetch(`${API_BASE_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((res) => parseResponse<AuthUser>(res));
+}
+
+export function updateProfile(
+  token: string,
+  data: { username?: string; interests?: Genre[] },
+): Promise<AuthUser> {
+  return fetch(`${API_BASE_URL}/users/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  }).then((res) => parseResponse<AuthUser>(res));
+}

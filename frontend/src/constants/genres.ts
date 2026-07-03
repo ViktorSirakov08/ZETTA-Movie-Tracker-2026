@@ -21,6 +21,27 @@ export const GENRES = [
 
 export type Genre = (typeof GENRES)[number];
 
+export const GENRE_LABELS: Record<Genre, string> = {
+  action: 'Action',
+  adventure: 'Adventure',
+  animation: 'Animation',
+  comedy: 'Comedy',
+  crime: 'Crime',
+  documentary: 'Documentary',
+  drama: 'Drama',
+  family: 'Family',
+  fantasy: 'Fantasy',
+  history: 'History',
+  horror: 'Horror',
+  music: 'Music',
+  mystery: 'Mystery',
+  romance: 'Romance',
+  'sci-fi': 'Sci-Fi',
+  thriller: 'Thriller',
+  war: 'War',
+  western: 'Western',
+};
+
 /**
  * Mirrors backend/src/common/enums/genre.enum.ts GENRE_KEYWORDS.
  * Keep in sync manually since frontend/backend are separate packages.
@@ -51,13 +72,28 @@ export const INTEREST_KEYWORDS: string[] = Array.from(
   new Set(Object.values(GENRE_KEYWORDS).flat()),
 ).sort((a, b) => a.localeCompare(b));
 
-/** Reverse lookup: keyword -> the genre(s) it belongs to. */
-export const KEYWORD_TO_GENRES: Record<string, Genre[]> = GENRES.reduce(
-  (map, genre) => {
+/**
+ * Reverse lookup: keyword -> the single genre it represents in the picker UI.
+ * Some keywords appear under more than one genre in GENRE_KEYWORDS (e.g. "mystery"
+ * is listed under both crime and mystery) - that's fine for backend recommendation
+ * matching, but for a UI where clicking one button should select exactly one genre,
+ * each keyword must resolve to exactly one genre. A genre's own name always wins
+ * that genre (pass 1); everything else is assigned first-come (pass 2).
+ */
+export const KEYWORD_TO_GENRE: Record<string, Genre> = (() => {
+  const map: Record<string, Genre> = {};
+
+  for (const genre of GENRES) {
+    map[genre] = genre;
+  }
+
+  for (const genre of GENRES) {
     for (const keyword of GENRE_KEYWORDS[genre]) {
-      map[keyword] = [...(map[keyword] ?? []), genre];
+      if (!(keyword in map)) {
+        map[keyword] = genre;
+      }
     }
-    return map;
-  },
-  {} as Record<string, Genre[]>,
-);
+  }
+
+  return map;
+})();
