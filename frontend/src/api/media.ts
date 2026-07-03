@@ -2,11 +2,28 @@ import type { Media } from '../types/media';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 
+export type MediaItem = Media;
+
 export async function fetchMedia(): Promise<Media[]> {
   const res = await fetch(`${API_BASE_URL}/media`);
   if (!res.ok) {
     throw new Error(`Failed to fetch media: ${res.status}`);
   }
+  return res.json();
+}
+
+export async function getWatchHistory(token: string): Promise<Media[]> {
+  const res = await fetch(`${API_BASE_URL}/media/history`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to fetch watch history: ${res.status}`);
+  }
+
   return res.json();
 }
 

@@ -101,7 +101,7 @@ export function HomePage() {
           <Link to="/profile" className="profile-button">
             Profile
           </Link>
-          <Link to="/history" className="profile-button">
+          <Link to="/history" className="history-button">
             History
           </Link>
         </div>
