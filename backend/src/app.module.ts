@@ -5,6 +5,15 @@ import { MediaModule } from './media/media.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { InterestsModule } from './interests/interests.module';
+import { Interest } from './interests/entities/interest.entity';
+import { UserInterest } from './interests/entities/user-interest.entity';
+import { RatingsModule } from './ratings/ratings.module';
+import { Rating } from './ratings/entities/rating.entity';
+import { Media } from './media/entity/media.entity';
+import { Episode } from './media/entity/episode.entity';
+import { Genre } from './media/entity/genre.entity';
+import { MediaWatchStatus } from './media/entity/media-watch-status.entity';
 
 @Module({
   imports: [
@@ -21,7 +30,16 @@ import { AuthModule } from './auth/auth.module';
         username: configService.getOrThrow<string>('DATABASE_USERNAME'),
         password: configService.getOrThrow<string>('DATABASE_PASSWORD'),
         database: configService.getOrThrow<string>('DATABASE_NAME'),
-        entities: [User],
+        entities: [
+          User,
+          Interest,
+          UserInterest,
+          Rating,
+          Media,
+          Episode,
+          Genre,
+          MediaWatchStatus,
+        ],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',
       }),
@@ -29,6 +47,8 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     AuthModule,
     MediaModule,
+    InterestsModule,
+    RatingsModule,
   ],
 })
 export class AppModule {}

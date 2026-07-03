@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
+import { PublicUser } from '../users/interfaces/public-user.interface';
 import { Role } from '../common/enums/role.enum';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -17,19 +18,23 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<User> {
+  async register(dto: RegisterDto): Promise<PublicUser> {
     const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
 
-    return this.usersService.create({
+    const user = await this.usersService.create({
       username: dto.username,
       password: hashedPassword,
       dateOfBirth: dto.dateOfBirth,
       role: Role.USER,
       interests: dto.interests,
     });
+
+    return this.usersService.toPublicUser(user);
   }
 
-  async login(dto: LoginDto): Promise<{ accessToken: string; user: User }> {
+  async login(
+    dto: LoginDto,
+  ): Promise<{ accessToken: string; user: PublicUser }> {
     const user = await this.usersService.findByUsername(dto.username);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -46,9 +51,11 @@ export class AuthService {
       role: user.role,
     };
 
+    const fullUser = await this.usersService.findByIdWithInterests(user.id);
+
     return {
       accessToken: await this.jwtService.signAsync(payload),
-      user,
+      user: this.usersService.toPublicUser(fullUser as User),
     };
   }
 }

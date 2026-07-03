@@ -5,9 +5,10 @@ import { AuthLayout } from '../components/AuthLayout';
 import { PasswordInput } from '../components/PasswordInput';
 import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
-import { ApiError, loginUser, registerUser } from '../api/auth';
+import { loginUser, registerUser } from '../api/auth';
+import { ApiError } from '../api/client';
 import { saveSession } from '../lib/auth-storage';
-import { KEYWORD_TO_GENRES, type Genre } from '../constants/genres';
+import { INTERESTS, INTEREST_LABELS } from '../constants/interests';
 
 export function SignupPage() {
   const navigate = useNavigate();
@@ -15,19 +16,19 @@ export function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [selectedKeywords, setSelectedKeywords] = useState<Set<string>>(
+  const [selectedInterests, setSelectedInterests] = useState<Set<string>>(
     new Set(),
   );
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  function toggleKeyword(keyword: string) {
-    setSelectedKeywords((prev) => {
+  function toggleInterest(interest: string) {
+    setSelectedInterests((prev) => {
       const next = new Set(prev);
-      if (next.has(keyword)) {
-        next.delete(keyword);
+      if (next.has(interest)) {
+        next.delete(interest);
       } else {
-        next.add(keyword);
+        next.add(interest);
       }
       return next;
     });
@@ -42,13 +43,7 @@ export function SignupPage() {
       return;
     }
 
-    const interests: Genre[] = Array.from(
-      new Set(
-        Array.from(selectedKeywords).flatMap(
-          (keyword) => KEYWORD_TO_GENRES[keyword] ?? [],
-        ),
-      ),
-    );
+    const interests = Array.from(selectedInterests);
 
     setSubmitting(true);
     try {
@@ -131,8 +126,10 @@ export function SignupPage() {
         <div className="field">
           <label>Interests</label>
           <InterestPicker
-            selectedKeywords={selectedKeywords}
-            onToggle={toggleKeyword}
+            selectedKeywords={selectedInterests}
+            onToggle={toggleInterest}
+            keywords={INTERESTS}
+            labels={INTEREST_LABELS}
           />
         </div>
 

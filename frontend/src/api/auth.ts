@@ -1,13 +1,12 @@
-import type { Genre } from '../constants/genres';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+import type { Interest } from '../constants/interests';
+import { API_BASE_URL, parseResponse } from './client';
 
 export interface AuthUser {
   id: string;
   username: string;
   dateOfBirth: string;
   role: 'user' | 'admin';
-  interests: Genre[];
+  interests: Interest[];
 }
 
 export interface LoginResponse {
@@ -15,34 +14,11 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.status = status;
-  }
-}
-
-async function parseResponse<T>(response: Response): Promise<T> {
-  const body = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      (body && typeof body.message === 'string' && body.message) ||
-      (body && Array.isArray(body.message) && body.message.join(', ')) ||
-      'Something went wrong. Please try again.';
-    throw new ApiError(message, response.status);
-  }
-
-  return body as T;
-}
-
 export function registerUser(data: {
   username: string;
   password: string;
   dateOfBirth: string;
-  interests: Genre[];
+  interests: Interest[];
 }): Promise<AuthUser> {
   return fetch(`${API_BASE_URL}/auth/register`, {
     method: 'POST',
@@ -60,4 +36,24 @@ export function loginUser(data: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   }).then((res) => parseResponse<LoginResponse>(res));
+}
+
+export function getMe(token: string): Promise<AuthUser> {
+  return fetch(`${API_BASE_URL}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then((res) => parseResponse<AuthUser>(res));
+}
+
+export function updateProfile(
+  token: string,
+  data: { username?: string; interests?: Interest[] },
+): Promise<AuthUser> {
+  return fetch(`${API_BASE_URL}/users/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  }).then((res) => parseResponse<AuthUser>(res));
 }

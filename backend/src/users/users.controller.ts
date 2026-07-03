@@ -11,7 +11,8 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Patch('me')
-  updateMe(@CurrentUser() user: User, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(user.id, dto);
+  async updateMe(@CurrentUser() user: User, @Body() dto: UpdateUserDto) {
+    const updated = await this.usersService.update(user.id, dto);
+    return this.usersService.toPublicUser(updated);
   }
 }

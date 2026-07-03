@@ -1,6 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
+  --bg: #f1f2eb;
+  --panel: #d8dad3;
+  --sage: #a4c2a5;
+  --sage-dark: #4f5d40;
+  --text: #2b2e28;
+  --border: rgba(79, 93, 64, 0.16);
+  --shadow:
+    rgba(79, 93, 64, 0.12) 0 24px 60px, rgba(79, 93, 64, 0.05) 0 10px 16px;
+  --radius-xl: 30px;
+  --radius-md: 16px;
+  --radius-pill: 999px;
+
+  font-family: 'Poppins', system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   --color-bg: #f4f2ea;
   --color-panel-bg: #ece8dc;
   --color-card-bg: #ffffff;
@@ -27,18 +47,23 @@
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
 }
 
 body {
-  background: var(--color-bg);
+  background:
+    radial-gradient(circle at top left, rgba(164, 194, 165, 0.22), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(216, 218, 211, 0.7), transparent 32%),
+    var(--bg);
+}
+
+button,
+input,
+select {
+  font: inherit;
 }
 
 button {
-  font-family: inherit;
-}
-
-input {
-  font-family: inherit;
+  cursor: pointer;
 }

@@ -5,9 +5,15 @@ interface AuthLayoutProps {
   quote: string;
   quoteAuthor: string;
   children: ReactNode;
+  variant?: 'auth' | 'profile';
 }
 
-export function AuthLayout({ quote, quoteAuthor, children }: AuthLayoutProps) {
+export function AuthLayout({
+  quote,
+  quoteAuthor,
+  children,
+  variant = 'auth',
+}: AuthLayoutProps) {
   return (
     <div className="auth-page">
       <div className="auth-card">
@@ -23,20 +29,37 @@ export function AuthLayout({ quote, quoteAuthor, children }: AuthLayoutProps) {
             </span>
           </div>
 
-          <div className="auth-illustration-center" aria-hidden="true">
-            <span className="auth-floating-chip auth-floating-chip--1">
-              🍿 Popcorn ready
-            </span>
-            <span className="auth-floating-chip auth-floating-chip--2">
-              ⭐ Top rated
-            </span>
-            <div className="auth-illustration-orb">
-              <span>🎥</span>
+          {variant === 'profile' ? (
+            <div className="auth-illustration-center" aria-hidden="true">
+              <span className="auth-floating-chip auth-floating-chip--1">
+                🎯 Your Picks
+              </span>
+              <span className="auth-floating-chip auth-floating-chip--2">
+                🔔 Stay Updated
+              </span>
+              <div className="auth-illustration-orb">
+                <span>🍿</span>
+              </div>
+              <span className="auth-floating-chip auth-floating-chip--3">
+                🎨 Personalize
+              </span>
             </div>
-            <span className="auth-floating-chip auth-floating-chip--3">
-              🎭 Drama
-            </span>
-          </div>
+          ) : (
+            <div className="auth-illustration-center" aria-hidden="true">
+              <span className="auth-floating-chip auth-floating-chip--1">
+                ▶ Now Playing
+              </span>
+              <span className="auth-floating-chip auth-floating-chip--2">
+                ★ 4.8 Rating
+              </span>
+              <div className="auth-illustration-orb">
+                <span>🍿</span>
+              </div>
+              <span className="auth-floating-chip auth-floating-chip--3">
+                📺 New Episodes
+              </span>
+            </div>
+          )}
 
           <blockquote className="auth-quote">
             <p>&ldquo;{quote}&rdquo;</p>
