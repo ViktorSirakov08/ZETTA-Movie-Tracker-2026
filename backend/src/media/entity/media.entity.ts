@@ -3,10 +3,14 @@ import {
   PrimaryGeneratedColumn,
   Column,
   OneToMany,
+  ManyToMany,
+  JoinTable,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
 import { Episode } from './episode.entity';
+import { Genre } from './genre.entity';
 
 export enum MediaType {
   MOVIE = 'MOVIE',
@@ -27,31 +31,29 @@ export class Media {
   @Column({ type: 'date' })
   releaseDate!: Date;
 
-  // Global/overall rating — an average of all user_media_progress.userRating values.
-  // Nullable because a freshly added title has "No Rating" yet.
   @Column({ type: 'float', nullable: true })
   rating!: number | null;
 
   @Column({ type: 'text' })
   description!: string;
 
-  // Simple string for now per your "genre - по-късно" note.
-  // If you want multiple genres per title later, this becomes its own table + ManyToMany.
-  @Column()
-  genre!: string;
+  @ManyToMany(() => Genre, (genre) => genre.media, { eager: true })
+  @JoinTable({
+  name: 'media_genres', // the actual join table name in Postgres
+  joinColumn: { name: 'media_id', referencedColumnName: 'id' },
+  inverseJoinColumn: { name: 'genre_id', referencedColumnName: 'id' },
+})
+genres!: Genre[];
 
   @Column({ default: false })
   ageRestricted!: boolean;
 
-  // Duration in minutes. For a MOVIE this is the runtime.
-  // For a SERIES, leave null (see note below) or sum from episodes.
   @Column({ type: 'int', nullable: true })
   durationMinutes!: number | null;
 
   @Column({ nullable: true })
   posterUrl!: string;
 
-  // Virtual field — no column, just lets you load episode.media relation.
   @OneToMany(() => Episode, (episode) => episode.media)
   episodes!: Episode[];
 

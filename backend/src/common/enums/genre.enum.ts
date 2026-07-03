@@ -1,4 +1,4 @@
-export enum Genre {
+export enum GenreKeywords {
   ACTION = 'action',
   ADVENTURE = 'adventure',
   ANIMATION = 'animation',
@@ -23,23 +23,23 @@ export enum Genre {
  * Related keywords each genre should match against when recommending
  * content (e.g. a movie tagged "heist" should count toward Genre.CRIME).
  */
-export const GENRE_KEYWORDS: Record<Genre, string[]> = {
-  [Genre.ACTION]: ['action', 'fight', 'explosion', 'stunt', 'martial arts'],
-  [Genre.ADVENTURE]: ['adventure', 'quest', 'expedition', 'journey','survival'],
-  [Genre.ANIMATION]: ['animation', 'cartoon', 'anime'],
-  [Genre.COMEDY]: ['comedy', 'sitcom', 'parody'],
-  [Genre.CRIME]: ['crime', 'mystery', 'murder', 'detectives'],
-  [Genre.DOCUMENTARY]: ['documentary', 'true story', 'biopic', 'docuseries'],
-  [Genre.DRAMA]: ['drama', 'melodrama', 'coming of age', 'tragedy'],
-  [Genre.FAMILY]: ['family', 'kids'],
-  [Genre.FANTASY]: ['fantasy', 'magic', 'sword and sorcery', 'mythical'],
-  [Genre.HISTORY]: ['history', 'period piece', 'war epic'],
-  [Genre.HORROR]: ['horror', 'slasher', 'supernatural', 'zombie', 'monster'],
-  [Genre.MUSIC]: ['music', 'musical', 'concert', 'band'],
-  [Genre.MYSTERY]: ['mystery', 'whodunit', 'detective', 'crime', 'conspiracy'],
-  [Genre.ROMANCE]: ['romance', 'love story', 'romantic comedy'],
-  [Genre.SCI_FI]: ['sci-fi', 'space', 'alien', 'dystopia'],
-  [Genre.THRILLER]: ['thriller', 'suspense', 'psychological', 'heist'],
-  [Genre.WAR]: ['war', 'military', 'battle', 'war epic'],
-  [Genre.WESTERN]: ['western', 'cowboy', 'outlaw', 'frontier'],
+export const GENRE_KEYWORDS: Record<GenreKeywords, string[]> = {
+  [GenreKeywords.ACTION]: ['action', 'fight', 'explosion', 'stunt', 'martial arts'],
+  [GenreKeywords.ADVENTURE]: ['adventure', 'quest', 'expedition', 'journey','survival'],
+  [GenreKeywords.ANIMATION]: ['animation', 'cartoon', 'anime'],
+  [GenreKeywords.COMEDY]: ['comedy', 'sitcom', 'parody'],
+  [GenreKeywords.CRIME]: ['crime', 'mystery', 'murder', 'detectives'],
+  [GenreKeywords.DOCUMENTARY]: ['documentary', 'true story', 'biopic', 'docuseries'],
+  [GenreKeywords.DRAMA]: ['drama', 'melodrama', 'coming of age', 'tragedy'],
+  [GenreKeywords.FAMILY]: ['family', 'kids'],
+  [GenreKeywords.FANTASY]: ['fantasy', 'magic', 'sword and sorcery', 'mythical'],
+  [GenreKeywords.HISTORY]: ['history', 'period piece', 'war epic'],
+  [GenreKeywords.HORROR]: ['horror', 'slasher', 'supernatural', 'zombie', 'monster'],
+  [GenreKeywords.MUSIC]: ['music', 'musical', 'concert', 'band'],
+  [GenreKeywords.MYSTERY]: ['mystery', 'whodunit', 'detective', 'crime', 'conspiracy'],
+  [GenreKeywords.ROMANCE]: ['romance', 'love story', 'romantic comedy'],
+  [GenreKeywords.SCI_FI]: ['sci-fi', 'space', 'alien', 'dystopia'],
+  [GenreKeywords.THRILLER]: ['thriller', 'suspense', 'psychological', 'heist'],
+  [GenreKeywords.WAR]: ['war', 'military', 'battle', 'war epic'],
+  [GenreKeywords.WESTERN]: ['western', 'cowboy', 'outlaw', 'frontier'],
 };

@@ -1,15 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Media } from '../entity/media.entity';
+import { Genre } from '../entity/genre.entity';
 import { Episode } from '../entity/episode.entity';
 import { CreateMediaDto } from '../dto/create-media.dto';
 import { UpdateMediaDto } from '../dto/update-media.dto';
 import { CreateEpisodeDto } from '../dto/create-episode.dto';
 
+
 @Injectable()
 export class MediaService {
   constructor(
+    @InjectRepository(Genre) private genreRepo: Repository<Genre>,
     @InjectRepository(Media)
     private mediaRepo: Repository<Media>,
     @InjectRepository(Episode)
@@ -33,9 +36,11 @@ export class MediaService {
     return media;
   }
 
-  create(dto: CreateMediaDto): Promise<Media> {
+  async create(dto: CreateMediaDto): Promise<Media> {
+    const genres = await this.genreRepo.findBy({ id: In(dto.genreIds) });
     const media = this.mediaRepo.create({
       ...dto,
+      genres,
       rating: null, // always starts as "No Rating"
     });
     return this.mediaRepo.save(media);

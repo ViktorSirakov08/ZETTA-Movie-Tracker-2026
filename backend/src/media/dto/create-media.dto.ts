@@ -6,6 +6,8 @@ import {
   IsOptional,
   IsInt,
   Min,
+  IsUUID,
+  IsArray,
 } from 'class-validator';
 
 import { MediaType } from '../entity/media.entity';
@@ -23,8 +25,9 @@ export class CreateMediaDto {
   @IsString()
   description!: string;
 
-  @IsString()
-  genre!: string;
+  @IsArray()
+  @IsUUID('4', { each: true })
+    genreIds!: string[];
 
   @IsBoolean()
   ageRestricted!: boolean;
