@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
 import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
-import { ApiError, getMe, updateProfile, type AuthUser } from '../api/auth';
+import { getMe, updateProfile, type AuthUser } from '../api/auth';
+import { ApiError } from '../api/client';
 import { clearSession, getToken, updateStoredUser } from '../lib/auth-storage';
 import { INTERESTS, INTEREST_LABELS } from '../constants/interests';
 
@@ -84,6 +85,10 @@ export function ProfilePage() {
       quote="Your taste in movies says a lot about you. Keep it up to date."
       quoteAuthor="Your profile"
     >
+      <Link to="/home" className="back-link">
+        ← Back to Home
+      </Link>
+
       <h1 className="auth-title">Your profile</h1>
       <p className="auth-subtitle">
         Update your username and pick what you're into

@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Media } from '../../media/entity/media.entity';
 
 @Entity('interests')
 export class Interest {
@@ -7,4 +8,7 @@ export class Interest {
 
   @Column({ unique: true })
   name: string;
+
+  @ManyToMany(() => Media, (media) => media.interests)
+  media!: Media[];
 }

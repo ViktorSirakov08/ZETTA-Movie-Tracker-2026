@@ -21,6 +21,12 @@
   gap: 12px;
 }
 
+.nav-buttons {
+  justify-self: start;
+  display: flex;
+  gap: 12px;
+}
+
 .profile-button {
   position: absolute;
   left: 0;

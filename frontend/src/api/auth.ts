@@ -1,6 +1,5 @@
 import type { Interest } from '../constants/interests';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+import { API_BASE_URL, parseResponse } from './client';
 
 export interface AuthUser {
   id: string;
@@ -13,29 +12,6 @@ export interface AuthUser {
 export interface LoginResponse {
   accessToken: string;
   user: AuthUser;
-}
-
-export class ApiError extends Error {
-  status: number;
-
-  constructor(message: string, status: number) {
-    super(message);
-    this.status = status;
-  }
-}
-
-async function parseResponse<T>(response: Response): Promise<T> {
-  const body = await response.json().catch(() => null);
-
-  if (!response.ok) {
-    const message =
-      (body && typeof body.message === 'string' && body.message) ||
-      (body && Array.isArray(body.message) && body.message.join(', ')) ||
-      'Something went wrong. Please try again.';
-    throw new ApiError(message, response.status);
-  }
-
-  return body as T;
 }
 
 export function registerUser(data: {

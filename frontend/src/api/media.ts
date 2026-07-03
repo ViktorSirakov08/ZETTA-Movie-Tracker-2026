@@ -10,7 +10,7 @@ export async function fetchMedia(): Promise<Media[]> {
   return res.json();
 }
 
-export async function createMedia(
+export async function createMedia(  
   token: string,
   data: {
     type: 'MOVIE' | 'SERIES';

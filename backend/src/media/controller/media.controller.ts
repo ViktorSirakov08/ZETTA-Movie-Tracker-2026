@@ -6,11 +6,15 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { MediaService } from '../service/media.service';
 import { CreateMediaDto } from '../dto/create-media.dto';
 import { UpdateMediaDto } from '../dto/update-media.dto';
 import { CreateEpisodeDto } from '../dto/create-episode.dto';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { User } from '../../users/entities/user.entity';
 
 @Controller('media')
 export class MediaController {
@@ -19,6 +23,12 @@ export class MediaController {
   @Get()
   findAll() {
     return this.mediaService.findAll();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('history')
+  findHistory(@CurrentUser() user: User) {
+    return this.mediaService.findWatchedByUser(user.id);
   }
 
   @Get(':id')

@@ -5,7 +5,8 @@ import { AuthLayout } from '../components/AuthLayout';
 import { PasswordInput } from '../components/PasswordInput';
 import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
-import { ApiError, loginUser, registerUser } from '../api/auth';
+import { loginUser, registerUser } from '../api/auth';
+import { ApiError } from '../api/client';
 import { saveSession } from '../lib/auth-storage';
 import { INTERESTS, INTEREST_LABELS } from '../constants/interests';
 

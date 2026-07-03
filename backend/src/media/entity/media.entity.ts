@@ -11,6 +11,7 @@ import {
 
 import { Episode } from './episode.entity';
 import { Genre } from './genre.entity';
+import { Interest } from '../../interests/entities/interest.entity';
 
 export enum MediaType {
   MOVIE = 'MOVIE',
@@ -44,6 +45,14 @@ export class Media {
     inverseJoinColumn: { name: 'genre_id', referencedColumnName: 'id' },
   })
   genres!: Genre[];
+
+  @ManyToMany(() => Interest, (interest) => interest.media, { eager: true })
+  @JoinTable({
+    name: 'interest_to_media', // the actual join table name in Postgres
+    joinColumn: { name: 'media_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'interest_id', referencedColumnName: 'id' },
+  })
+  interests!: Interest[];
 
   @Column({ default: false })
   ageRestricted!: boolean;

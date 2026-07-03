@@ -97,9 +97,14 @@ export function HomePage() {
   return (
     <main className="home-page">
       <header className="top-bar">
-        <Link to="/profile" className="profile-button">
-          Profile
-        </Link>
+        <div className="nav-buttons">
+          <Link to="/profile" className="profile-button">
+            Profile
+          </Link>
+          <Link to="/history" className="profile-button">
+            History
+          </Link>
+        </div>
 
         {/* Grouping the search and filter elements together */}
         <div className="center-controls">
