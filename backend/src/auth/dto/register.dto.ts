@@ -2,14 +2,18 @@ import {
   ArrayUnique,
   IsArray,
   IsDateString,
-  IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { Genre } from '../../common/enums/genre.enum';
+import {
+  INTEREST_NAMES,
+  type InterestName,
+} from '../../common/constants/interest-names';
+import { IsValidDateOfBirth } from '../../common/validators/is-valid-date-of-birth.decorator';
 
 export class RegisterDto {
   @IsString()
@@ -27,11 +31,12 @@ export class RegisterDto {
   password: string;
 
   @IsDateString()
+  @IsValidDateOfBirth()
   dateOfBirth: string;
 
   @IsOptional()
   @IsArray()
   @ArrayUnique()
-  @IsEnum(Genre, { each: true })
-  interests?: Genre[];
+  @IsIn(INTEREST_NAMES, { each: true })
+  interests?: InterestName[];
 }

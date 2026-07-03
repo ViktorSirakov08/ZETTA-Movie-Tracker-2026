@@ -42,10 +42,7 @@ export class MediaController {
   }
 
   @Post(':mediaId/episodes')
-  addEpisode(
-    @Param('mediaId') mediaId: string,
-    @Body() dto: CreateEpisodeDto,
-  ) {
+  addEpisode(@Param('mediaId') mediaId: string, @Body() dto: CreateEpisodeDto) {
     return this.mediaService.addEpisode(mediaId, dto);
   }
 }

@@ -13,10 +13,14 @@ import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
+import { UsersService } from '../users/users.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -31,7 +35,8 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@CurrentUser() user: User) {
-    return user;
+  async me(@CurrentUser() user: User) {
+    const fullUser = await this.usersService.findByIdWithInterests(user.id);
+    return this.usersService.toPublicUser(fullUser as User);
   }
 }
