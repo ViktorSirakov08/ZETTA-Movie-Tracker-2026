@@ -18,8 +18,13 @@
   min-height: 1px;
 }
 
-.profile-button {
+.nav-buttons {
   justify-self: start;
+  display: flex;
+  gap: 12px;
+}
+
+.profile-button {
   display: inline-flex;
   align-items: center;
   gap: 8px;

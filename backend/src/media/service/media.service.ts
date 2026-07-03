@@ -4,6 +4,10 @@ import { In, Repository } from 'typeorm';
 import { Media } from '../entity/media.entity';
 import { Genre } from '../entity/genre.entity';
 import { Episode } from '../entity/episode.entity';
+import {
+  MediaWatchStatus,
+  WatchStatus,
+} from '../entity/media-watch-status.entity';
 import { CreateMediaDto } from '../dto/create-media.dto';
 import { UpdateMediaDto } from '../dto/update-media.dto';
 import { CreateEpisodeDto } from '../dto/create-episode.dto';
@@ -16,6 +20,8 @@ export class MediaService {
     private mediaRepo: Repository<Media>,
     @InjectRepository(Episode)
     private episodeRepo: Repository<Episode>,
+    @InjectRepository(MediaWatchStatus)
+    private watchStatusRepo: Repository<MediaWatchStatus>,
   ) {}
 
   findAll(): Promise<Media[]> {
@@ -63,5 +69,13 @@ export class MediaService {
     await this.findOne(mediaId);
     const episode = this.episodeRepo.create({ ...dto, mediaId });
     return this.episodeRepo.save(episode);
+  }
+
+  async findWatchedByUser(userId: string): Promise<Media[]> {
+    const entries = await this.watchStatusRepo.find({
+      where: { userId, status: WatchStatus.WATCHED },
+      relations: { media: true },
+    });
+    return entries.map((entry) => entry.media);
   }
 }

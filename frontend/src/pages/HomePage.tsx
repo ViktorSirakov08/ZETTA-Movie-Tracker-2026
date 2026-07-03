@@ -161,9 +161,14 @@ export function HomePage() {
   return (
     <main className="home-page">
       <header className="top-bar">
-        <Link to="/profile" className="profile-button">
-          Profile
-        </Link>
+        <div className="nav-buttons">
+          <Link to="/profile" className="profile-button">
+            Profile
+          </Link>
+          <Link to="/history" className="profile-button">
+            History
+          </Link>
+        </div>
 
         <label className="search-shell" aria-label="Search media">
           <span className="search-icon" aria-hidden="true">

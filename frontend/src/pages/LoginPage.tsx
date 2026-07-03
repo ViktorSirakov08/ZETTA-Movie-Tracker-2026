@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
 import { PasswordInput } from '../components/PasswordInput';
 import '../components/forms.css';
-import { ApiError, loginUser } from '../api/auth';
+import { loginUser } from '../api/auth';
+import { ApiError } from '../api/client';
 import { saveSession } from '../lib/auth-storage';
 
 export function LoginPage() {
