@@ -1,142 +1,71 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
+import { getMe, type AuthUser } from '../api/auth';
+import { fetchMedia } from '../api/media';
+import { fetchGenres } from '../api/genres';
+import type { Media } from '../types/media';
+import type { Genre } from '../types/genre';
 
-type Category = 'All' | 'Newest' | 'Highest Rated';
-type Genre =
-  | 'All'
-  | 'Action'
-  | 'Adventure'
-  | 'Drama'
-  | 'Comedy'
-  | 'Crime'
-  | 'Documentary'
-  | 'Fantasy'
-  | 'Mystery'
-  | 'Romance'
-  | 'Sci-Fi'
-  | 'Thriller';
+type Category = 'Newest' | 'Highest Rated';
 
-type MediaBlock = {
-  id: number;
-  title: string;
-  description: string;
-  rating: number;
-  releaseYear: number;
-  genres: Genre[];
-  accent: 'sage' | 'panel' | 'light';
-};
-
-const categories: Exclude<Category, 'All'>[] = ['Newest', 'Highest Rated'];
-
-const genres: Genre[] = [
-  'All',
-  'Action',
-  'Adventure',
-  'Drama',
-  'Comedy',
-  'Crime',
-  'Documentary',
-  'Fantasy',
-  'Mystery',
-  'Romance',
-  'Sci-Fi',
-  'Thriller',
-];
-
-const mediaBlocks: MediaBlock[] = [
-  {
-    id: 1,
-    title: 'Neon Harbor',
-    description: 'A moody sci-fi mystery about a city that listens back.',
-    rating: 9.1,
-    releaseYear: 2026,
-    genres: ['Action', 'Adventure', 'Fantasy'],
-    accent: 'sage',
-  },
-  {
-    id: 2,
-    title: 'Glass Orchard',
-    description: 'A tender family drama wrapped in an uneasy secret.',
-    rating: 8.4,
-    releaseYear: 2024,
-    genres: ['Drama', 'Mystery'],
-    accent: 'panel',
-  },
-  {
-    id: 3,
-    title: 'Iron Satellite',
-    description: 'Fast-paced survival on a failing orbital station.',
-    rating: 9.3,
-    releaseYear: 2025,
-    genres: ['Action', 'Sci-Fi', 'Thriller'],
-    accent: 'light',
-  },
-  {
-    id: 4,
-    title: 'Quiet Signals',
-    description:
-      'A documentary about memory, broadcasts, and the people behind them.',
-    rating: 8.0,
-    releaseYear: 2023,
-    genres: ['Documentary', 'Mystery'],
-    accent: 'panel',
-  },
-  {
-    id: 5,
-    title: 'After the Bloom',
-    description: 'A soft romance about timing, distance, and second chances.',
-    rating: 8.6,
-    releaseYear: 2025,
-    genres: ['Romance', 'Drama'],
-    accent: 'sage',
-  },
-  {
-    id: 6,
-    title: 'Midnight Ledger',
-    description: 'A tense crime story where every clue costs something.',
-    rating: 9.0,
-    releaseYear: 2026,
-    genres: ['Crime', 'Thriller', 'Mystery'],
-    accent: 'light',
-  },
-];
-
-const interestKeywords = ['space', 'family', 'mystery', 'heist', 'future'];
+const categories: Category[] = ['Newest', 'Highest Rated'];
 
 export function HomePage() {
   const token = getToken();
 
+  const [media, setMedia] = useState<Media[]>([]);
+  const [genres, setGenres] = useState<Genre[]>([]);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [query, setQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] =
-    useState<Exclude<Category, 'All'>>('Newest');
-  const [selectedGenre, setSelectedGenre] = useState<Genre>('All');
+  const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
+  const [selectedGenreId, setSelectedGenreId] = useState<string>('All');
   const [searchByInterests, setSearchByInterests] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const filteredBlocks = useMemo(() => {
+  useEffect(() => {
+    if (!token) return;
+
+    Promise.all([fetchMedia(), fetchGenres(), getMe(token)])
+      .then(([mediaData, genreData, user]) => {
+        setMedia(mediaData);
+        setGenres(genreData);
+        setCurrentUser(user);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const filteredMedia = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return [...mediaBlocks]
-      .filter((block) => {
+    return [...media]
+      .filter((item) => {
+        const genreNames = item.genres.map((g) => g.name).join(' ');
+
         const matchesQuery =
           normalizedQuery.length === 0 ||
           [
-            block.title,
-            block.description,
-            block.genres.join(' '),
-            String(block.releaseYear),
+            item.name,
+            item.description,
+            genreNames,
+            String(new Date(item.releaseDate).getFullYear()),
           ]
             .join(' ')
             .toLowerCase()
             .includes(normalizedQuery);
 
         const matchesGenre =
-          selectedGenre === 'All' || block.genres.includes(selectedGenre);
+          selectedGenreId === 'All' ||
+          item.genres.some((g) => g.id === selectedGenreId);
+
         const matchesInterest = searchByInterests
-          ? interestKeywords.some((keyword) =>
-              [block.title, block.description, block.genres.join(' ')]
+          ? (currentUser?.interests ?? []).some((keyword) =>
+              [item.name, item.description, genreNames]
                 .join(' ')
                 .toLowerCase()
                 .includes(keyword),
@@ -146,17 +75,24 @@ export function HomePage() {
         return matchesQuery && matchesGenre && matchesInterest;
       })
       .sort((a, b) => {
-        if (selectedCategory === 'Highest Rated') {
-          return b.rating - a.rating || b.releaseYear - a.releaseYear;
-        }
+        const ratingA = a.rating ?? 0;
+        const ratingB = b.rating ?? 0;
+        const yearA = new Date(a.releaseDate).getFullYear();
+        const yearB = new Date(b.releaseDate).getFullYear();
 
-        return b.releaseYear - a.releaseYear || b.rating - a.rating;
+        if (selectedCategory === 'Highest Rated') {
+          return ratingB - ratingA || yearB - yearA;
+        }
+        return yearB - yearA || ratingB - ratingA;
       });
-  }, [query, searchByInterests, selectedCategory, selectedGenre]);
+  }, [media, query, searchByInterests, selectedCategory, selectedGenreId, currentUser]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
+
+  if (loading) return <div className="home-page-status">Loading...</div>;
+  if (error) return <div className="home-page-status">Something went wrong: {error}</div>;
 
   return (
     <main className="home-page">
@@ -165,121 +101,135 @@ export function HomePage() {
           <Link to="/profile" className="profile-button">
             Profile
           </Link>
-          <Link to="/history" className="profile-button">
+          <Link to="/history" className="history-button">
             History
           </Link>
         </div>
 
-        <label className="search-shell" aria-label="Search media">
-          <span className="search-icon" aria-hidden="true">
-            ⌕
-          </span>
-          <input
-            type="search"
-            placeholder="Search media"
-            aria-label="Search media"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </label>
+        {/* Grouping the search and filter elements together */}
+        <div className="center-controls">
+          <label className="search-shell" aria-label="Search media">
+            <span className="search-icon" aria-hidden="true">
+              ⌕
+            </span>
+            <input
+              type="search"
+              placeholder="Search media"
+              aria-label="Search media"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
 
-        <aside className="filter-menu-shell" aria-label="Filter menu">
-          <button
-            type="button"
-            className={
-              filtersOpen
-                ? 'hamburger-button hamburger-button--open'
-                : 'hamburger-button'
-            }
-            onClick={() => setFiltersOpen((open) => !open)}
-            aria-expanded={filtersOpen}
-            aria-controls="filter-panel"
-            aria-label="Toggle filter menu"
-          >
-            <span />
-            <span />
-            <span />
-          </button>
+          <aside className="filter-menu-shell" aria-label="Filter menu">
+            <button
+              type="button"
+              className={
+                filtersOpen
+                  ? 'hamburger-button hamburger-button--open'
+                  : 'hamburger-button'
+              }
+              onClick={() => setFiltersOpen((open) => !open)}
+              aria-expanded={filtersOpen}
+              aria-controls="filter-panel"
+              aria-label="Toggle filter menu"
+            >
+              <span />
+              <span />
+              <span />
+            </button>
 
-          <div
-            id="filter-panel"
-            className={
-              filtersOpen ? 'filter-panel filter-panel--open' : 'filter-panel'
-            }
-          >
-            <div className="filter-group">
-              <span className="filter-label">Categories</span>
-              <div className="chip-row">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    type="button"
-                    className={
-                      selectedCategory === category
-                        ? 'chip chip--active'
-                        : 'chip'
-                    }
-                    onClick={() => setSelectedCategory(category)}
-                  >
-                    {category}
-                  </button>
-                ))}
+            <div
+              id="filter-panel"
+              className={
+                filtersOpen ? 'filter-panel filter-panel--open' : 'filter-panel'
+              }
+            >
+              <div className="filter-group">
+                <span className="filter-label">Categories</span>
+                <div className="chip-row">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      className={
+                        selectedCategory === category
+                          ? 'chip chip--active'
+                          : 'chip'
+                      }
+                      onClick={() => setSelectedCategory(category)}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="filter-group">
-              <span className="filter-label">Genres</span>
-              <select
-                className="genre-select"
-                value={selectedGenre}
-                onChange={(event) =>
-                  setSelectedGenre(event.target.value as Genre)
-                }
-                aria-label="Select a genre"
-              >
-                {genres.map((genre) => (
-                  <option key={genre} value={genre}>
-                    {genre}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div className="filter-group">
+                <span className="filter-label">Genres</span>
+                <select
+                  className="genre-select"
+                  value={selectedGenreId}
+                  onChange={(event) => setSelectedGenreId(event.target.value)}
+                  aria-label="Select a genre"
+                >
+                  <option value="All">All</option>
+                  {genres.map((genre) => (
+                    <option key={genre.id} value={genre.id}>
+                      {genre.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <label className="interest-toggle">
-              <input
-                type="checkbox"
-                checked={searchByInterests}
-                onChange={(event) =>
-                  setSearchByInterests(event.target.checked)
-                }
-              />
-              <span>Search by interests</span>
-            </label>
-          </div>
-        </aside>
+              <label className="interest-toggle">
+                <input
+                  type="checkbox"
+                  checked={searchByInterests}
+                  onChange={(event) =>
+                    setSearchByInterests(event.target.checked)
+                  }
+                />
+                <span>Search by interests</span>
+              </label>
+            </div>
+          </aside>
+        </div>
+
+        {currentUser?.role === 'admin' && (
+          <Link to="/media/add" className="add-media-button">
+            Add Media
+          </Link>
+        )}
       </header>
 
       <section className="media-stage" aria-label="Media blocks">
         <div className="media-grid">
-          {filteredBlocks.map((block) => (
-            <article className="media-card" key={block.id}>
-              <div className={`media-poster media-poster--${block.accent}`}>
-                <span className="poster-label">Picture</span>
+          {filteredMedia.map((item) => (
+            <article className="media-card" key={item.id}>
+              <div className="media-poster">
+                {item.posterUrl ? (
+                  <img src={item.posterUrl} alt={item.name} />
+                ) : (
+                  <span className="poster-label">Picture</span>
+                )}
               </div>
 
               <div className="media-copy">
                 <div className="media-head">
-                  <h2>{block.title}</h2>
+                  <h2>{item.name}</h2>
                   <span className="media-rating">
-                    {block.rating.toFixed(1)}
+                    {item.rating !== null ? item.rating.toFixed(1) : 'No Rating'}
                   </span>
                 </div>
-                <p className="release-year">Released {block.releaseYear}</p>
-                <p>{block.description}</p>
+                <p className="release-year">
+                  Released {new Date(item.releaseDate).getFullYear()}
+                </p>
+                <p>{item.description}</p>
                 <div className="genre-row" aria-label="Genres">
-                  {block.genres.map((genre) => (
-                    <span className="genre-pill" key={genre}>
-                      {genre}
+                  {item.genres.map((genre) => (
+                    <span className="genre-pill" key={genre.id}>
+                      {genre.name}
                     </span>
                   ))}
                 </div>

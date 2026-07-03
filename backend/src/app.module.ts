@@ -5,6 +5,7 @@ import { MediaModule } from './media/media.module';
 import { User } from './users/entities/user.entity';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { GenreModule } from './media/genre.module';
 import { InterestsModule } from './interests/interests.module';
 import { Interest } from './interests/entities/interest.entity';
 import { UserInterest } from './interests/entities/user-interest.entity';
@@ -47,6 +48,7 @@ import { MediaWatchStatus } from './media/entity/media-watch-status.entity';
     UsersModule,
     AuthModule,
     MediaModule,
+    GenreModule,
     InterestsModule,
     RatingsModule,
   ],
