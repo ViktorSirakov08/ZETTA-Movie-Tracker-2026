@@ -3,6 +3,11 @@ export interface Genre {
   name: string;
 }
 
+export interface MediaInterest {
+  id: string;
+  name: string;
+}
+
 export interface Media {
   id: string;
   type: 'MOVIE' | 'SERIES';
@@ -11,6 +16,7 @@ export interface Media {
   rating: number | null;
   description: string;
   genres: Genre[];
+  interests: MediaInterest[];
   ageRestricted: boolean;
   durationMinutes: number | null;
   posterUrl: string | null;

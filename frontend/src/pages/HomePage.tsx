@@ -64,11 +64,8 @@ export function HomePage() {
           item.genres.some((g) => g.id === selectedGenreId);
 
         const matchesInterest = searchByInterests
-          ? (currentUser?.interests ?? []).some((keyword) =>
-              [item.name, item.description, genreNames]
-                .join(' ')
-                .toLowerCase()
-                .includes(keyword),
+          ? item.interests.some((interest) =>
+              (currentUser?.interests ?? []).includes(interest.name),
             )
           : true;
 

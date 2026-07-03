@@ -16,7 +16,9 @@ export class GenreService {
   }
 
   async create(dto: CreateGenreDto): Promise<Genre> {
-    const existing = await this.genreRepo.findOne({ where: { name: dto.name } });
+    const existing = await this.genreRepo.findOne({
+      where: { name: dto.name },
+    });
     if (existing) {
       throw new ConflictException(`Genre "${dto.name}" already exists`);
     }
