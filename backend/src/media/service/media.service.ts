@@ -4,6 +4,7 @@ import { In, Repository } from 'typeorm';
 import { Media } from '../entity/media.entity';
 import { Genre } from '../entity/genre.entity';
 import { Episode } from '../entity/episode.entity';
+import { Interest } from '../../interests/entities/interest.entity';
 import {
   MediaWatchStatus,
   WatchStatus,
@@ -16,6 +17,7 @@ import { CreateEpisodeDto } from '../dto/create-episode.dto';
 export class MediaService {
   constructor(
     @InjectRepository(Genre) private genreRepo: Repository<Genre>,
+    @InjectRepository(Interest) private interestRepo: Repository<Interest>,
     @InjectRepository(Media)
     private mediaRepo: Repository<Media>,
     @InjectRepository(Episode)
@@ -42,10 +44,17 @@ export class MediaService {
   }
 
   async create(dto: CreateMediaDto): Promise<Media> {
-    const genres = await this.genreRepo.findBy({ id: In(dto.genreIds) });
+    const { genreIds, interestIds, ...rest } = dto;
+
+    const genres = await this.genreRepo.findBy({ id: In(genreIds) });
+    const interests = interestIds?.length
+      ? await this.interestRepo.findBy({ id: In(interestIds) })
+      : [];
+
     const media = this.mediaRepo.create({
-      ...dto,
+      ...rest,
       genres,
+      interests,
       rating: null, // always starts as "No Rating"
     });
     return this.mediaRepo.save(media);
@@ -53,7 +62,19 @@ export class MediaService {
 
   async update(id: string, dto: UpdateMediaDto): Promise<Media> {
     const media = await this.findOne(id);
-    Object.assign(media, dto);
+    const { genreIds, interestIds, ...rest } = dto;
+
+    Object.assign(media, rest);
+
+    if (genreIds !== undefined) {
+      media.genres = await this.genreRepo.findBy({ id: In(genreIds) });
+    }
+    if (interestIds !== undefined) {
+      media.interests = interestIds.length
+        ? await this.interestRepo.findBy({ id: In(interestIds) })
+        : [];
+    }
+
     return this.mediaRepo.save(media);
   }
 

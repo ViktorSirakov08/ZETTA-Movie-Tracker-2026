@@ -35,6 +35,7 @@ export async function createMedia(
     releaseDate: string;
     description: string;
     genreIds: string[];
+    interestIds?: string[];
     ageRestricted: boolean;
     durationMinutes?: number;
     posterUrl?: string;
