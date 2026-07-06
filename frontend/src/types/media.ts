@@ -8,6 +8,8 @@ export interface MediaInterest {
   name: string;
 }
 
+export type AgeRestriction = 'NONE' | 'PG13' | 'PG18';
+
 export interface Media {
   id: string;
   type: 'MOVIE' | 'SERIES';
@@ -17,7 +19,7 @@ export interface Media {
   description: string;
   genres: Genre[];
   interests: MediaInterest[];
-  ageRestricted: boolean;
+  ageRestriction: AgeRestriction;
   durationMinutes: number | null;
   posterUrl: string | null;
   episodes?: Episode[] | null;
