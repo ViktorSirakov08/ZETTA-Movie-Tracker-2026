@@ -5,11 +5,13 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  Unique
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('ratings')
-@Check(`"value" >= 1 AND "value" <= 5`)
+@Check(`"value" >= 0 AND "value" <= 5`)
+@Unique(['userId', 'mediaId'])
 export class Rating {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -21,8 +23,6 @@ export class Rating {
   @Column({ name: 'user_id' })
   userId!: string;
 
-  // No FK relation to Media here on purpose — the media table isn't managed
-  // on this branch. This just stores the referenced media's id as plain data.
   @Column({ name: 'media_id', type: 'uuid' })
   mediaId!: string;
 

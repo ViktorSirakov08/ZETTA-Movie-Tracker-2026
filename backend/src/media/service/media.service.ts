@@ -119,4 +119,36 @@ export class MediaService {
   findCurrentlyWatchingForUser(userId: string): Promise<Media[]> {
     return this.findByStatusForUser(userId, WatchStatus.WATCHING);
   }
+
+    async setWatchStatus(
+    userId: string,
+    mediaId: string,
+    status: WatchStatus,
+  ): Promise<MediaWatchStatus> {
+    // Confirms the media actually exists before recording progress against it.
+    await this.findOne(mediaId);
+
+    let entry = await this.watchStatusRepo.findOne({
+      where: { userId, mediaId },
+    });
+
+    if (entry) {
+      entry.status = status;
+    } else {
+      entry = this.watchStatusRepo.create({ userId, mediaId, status });
+    }
+
+    return this.watchStatusRepo.save(entry);
+  }
+
+  async getWatchStatus(
+    userId: string,
+    mediaId: string,
+  ): Promise<WatchStatus> {
+    const entry = await this.watchStatusRepo.findOne({
+      where: { userId, mediaId },
+    });
+    return entry?.status ?? WatchStatus.NOT_WATCHED;
+  }
 }
+

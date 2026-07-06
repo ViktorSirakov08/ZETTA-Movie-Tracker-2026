@@ -468,3 +468,9 @@
     min-height: 0;
   }
 }
+
+.media-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}

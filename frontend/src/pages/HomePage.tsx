@@ -212,14 +212,15 @@ export function HomePage() {
         <div className="media-grid">
           {filteredMedia.map((item) => (
             <article className="media-card" key={item.id}>
-              <div className="media-poster">
-                {item.posterUrl ? (
-                  <img src={item.posterUrl} alt={item.name} />
-                ) : (
-                  <span className="poster-label">Picture</span>
-                )}
-              </div>
-
+              <Link to={`/media/${item.id}`} className="media-card-link" key={item.id}>
+                <div className="media-poster">
+                  {item.posterUrl ? (
+                    <img src={item.posterUrl} alt={item.name} />
+                  ) : (
+                    <span className="poster-label">Picture</span>
+                  )}
+                </div>
+              </Link>
               <div className="media-copy">
                 <div className="media-head">
                   <h2>{item.name}</h2>
