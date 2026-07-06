@@ -246,8 +246,8 @@ export function AddMediaPage() {
         genreIds,
         interestNames:
           selectedInterestNames.length > 0 ? selectedInterestNames : undefined,
-        ageRestricted: ageRestriction === '18',
-        ageRestricted13: ageRestriction === '13',
+        ageRestriction:
+          ageRestriction === '18' ? 'PG18' : ageRestriction === '13' ? 'PG13' : 'NONE',
         durationMinutes: parsedDuration,
         posterUrl: posterUrl.trim() || undefined,
       });

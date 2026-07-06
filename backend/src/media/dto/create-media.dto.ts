@@ -45,9 +45,6 @@ export class CreateMediaDto {
   @IsEnum(AgeRestriction)
   ageRestriction!: AgeRestriction;
 
-  @IsBoolean()
-  ageRestricted13!: boolean;
-
   @IsOptional()
   @IsInt()
   @Min(1)
@@ -56,7 +53,4 @@ export class CreateMediaDto {
   @IsOptional()
   @IsString()
   posterUrl?: string;
-
-  // Deliberately no `rating` field here — it's set to null on creation
-  // ("No Rating") and only ever changes via user ratings, never on create.
 }

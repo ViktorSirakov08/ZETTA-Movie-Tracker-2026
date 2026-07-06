@@ -5,6 +5,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media } from '../types/media';
 import { rateMedia, getUserRating } from '../api/ratings';
+import { updateMedia, deleteMedia } from '../api/media';
+import { fetchGenres } from '../api/genres';
+import type { Genre } from '../types/genre';
 import { getMe, type AuthUser } from '../api/auth';
 import { calculateAge, minimumAgeFor } from '../lib/age';
 import './MediaPage.css';
@@ -16,6 +19,10 @@ export function MediaDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [watchStatus, setWatchStatusState] = useState<string>('NOT_WATCHED');
   const [userRating, setUserRating] = useState<number | null>(null);
+  const [editAgeRestriction, setEditAgeRestriction] = useState<'NONE' | 'PG13' | 'PG18'>('NONE');
+  const [editDurationMinutes, setEditDurationMinutes] = useState('');
+  const [editGenreIds, setEditGenreIds] = useState<string[]>([]);
+  const [allGenres, setAllGenres] = useState<Genre[]>([]);
   const navigate = useNavigate();
   
   // Reusing Auth state matching HomePage pattern
@@ -44,23 +51,26 @@ export function MediaDetailPage() {
   useEffect(() => {
     if (!id) return;
     const token = getToken();
-
-    // Reusing the native sequential batch pipeline pattern from your home file
+    fetchGenres().then(setAllGenres).catch(() => {});
+    
     Promise.all([
-      fetchMediaById(id),
-      token ? getMe(token) : Promise.resolve(null)
+    fetchMediaById(id),
+    token ? getMe(token) : Promise.resolve(null)
     ])
-      .then(([mediaData, user]) => {
+    .then(([mediaData, user]) => {
         setMedia(mediaData);
         setCurrentUser(user);
         
-        // Map edit fields data on initial mount
         setEditName(mediaData.name);
         setEditDescription(mediaData.description);
         setEditPosterUrl(mediaData.posterUrl ?? '');
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+        setEditDurationMinutes(mediaData.durationMinutes ? String(mediaData.durationMinutes) : '');
+        setEditGenreIds(mediaData.genres.map((g) => g.id));
+        
+        setEditAgeRestriction(mediaData.ageRestriction ?? 'NONE');
+    })
+    .catch((err) => setError(err.message))
+    .finally(() => setLoading(false));
 
     if (token) {
         getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
@@ -96,30 +106,22 @@ export function MediaDetailPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`http://localhost:3000/media/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: editName,
-          description: editDescription,
-          posterUrl: editPosterUrl || null,
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update media data.');
-
-      const updated = await fetchMediaById(id);
-      setMedia(updated);
-      setIsEditing(false);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error updating data.');
-    } finally {
-      setIsSubmitting(false);
+            const updated = await updateMedia(token, id, {
+            name: editName,
+            description: editDescription,
+            posterUrl: editPosterUrl || undefined,
+            ageRestriction: editAgeRestriction, 
+            durationMinutes: editDurationMinutes ? Number(editDurationMinutes) : undefined,
+            genreIds: editGenreIds,
+            });
+            setMedia(updated);
+            setIsEditing(false);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Error updating data.');
+        } finally {
+            setIsSubmitting(false);
+        }
     }
-  }
 
   function handlePlay() {
       if (!canWatch) {
@@ -166,28 +168,21 @@ export function MediaDetailPage() {
   }
 
   async function handleDeleteMedia() {
-    const confirmDelete = window.confirm("Are you sure you want to delete this media item? This cannot be undone.");
+    const confirmDelete = window.confirm(
+        'Are you sure you want to delete this media item? This cannot be undone.',
+    );
     if (!confirmDelete) return;
 
     const token = getToken();
     if (!token || !id) return;
 
     try {
-        const response = await fetch(`http://localhost:3000/media/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${token}`,
-        },
-        });
-
-        if (!response.ok) throw new Error('Failed to delete media item.');
-
-        // Redirect to home page instantly upon successful deletion
+        await deleteMedia(token, id);
         navigate('/home');
     } catch (err) {
         alert(err instanceof Error ? err.message : 'Error deleting media.');
     }
-  }
+    }
 
   if (loading) return <div className="detail-status">Loading...</div>;
   if (error) return <div className="detail-status">Something went wrong: {error}</div>;
@@ -217,8 +212,7 @@ export function MediaDetailPage() {
               <p className="detail-meta">
                 {releaseYear} · {media.type === 'MOVIE' ? 'Movie' : 'Series'}
                 {media.durationMinutes ? ` · ${media.durationMinutes}m` : ''}
-                {media.ageRestricted13 ? ' · 13+' : ''}
-                {media.ageRestricted ? ' · 18+' : ''}
+                {media.ageRestriction !== 'NONE' ? ` · ${media.ageRestriction === 'PG13' ? '13+' : '18+'}` : ''}
               </p>
             </div>
             <div className="rating-block">
@@ -315,6 +309,53 @@ export function MediaDetailPage() {
                   required
                 />
               </div>
+              <div className="field">
+                <label htmlFor="edit-duration">Duration (minutes)</label>
+                <input
+                    id="edit-duration"
+                    type="number"
+                    min="0"
+                    value={editDurationMinutes}
+                    onChange={(e) => setEditDurationMinutes(e.target.value)}
+                />
+                </div>
+
+                <div className="field">
+                <label htmlFor="edit-age">Age restriction</label>
+                <select
+                    id="edit-age"
+                    value={editAgeRestriction}
+                    onChange={(e) => setEditAgeRestriction(e.target.value as 'NONE' | 'PG13' | 'PG18')}
+                >
+                    <option value="NONE">None</option>
+                    <option value="PG13">13+</option>
+                    <option value="PG18">18+</option>
+                </select>
+                </div>
+
+                <div className="field">
+                <label>Genres</label>
+                <div className="genre-chip-row">
+                    {allGenres.map((genre) => (
+                    <button
+                        type="button"
+                        key={genre.id}
+                        className={
+                        editGenreIds.includes(genre.id) ? 'genre-chip genre-chip--active' : 'genre-chip'
+                        }
+                        onClick={() =>
+                        setEditGenreIds((current) =>
+                            current.includes(genre.id)
+                            ? current.filter((g) => g !== genre.id)
+                            : [...current, genre.id],
+                        )
+                        }
+                    >
+                        {genre.name}
+                    </button>
+                    ))}
+                </div>
+                </div>
               <div className="form-panel-buttons">
                 <button type="submit" className="action-button action-button--primary" disabled={isSubmitting}>
                   {isSubmitting ? 'Saving...' : 'Save Changes'}

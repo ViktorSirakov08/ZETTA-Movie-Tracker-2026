@@ -106,6 +106,47 @@ export async function createMedia(
   return res.json();
 }
 
+export async function updateMedia(
+  token: string,
+  id: string,
+  data: Partial<{
+    name: string;
+    releaseDate: string;
+    description: string;
+    genreIds: string[];
+    interestIds?: string[];
+    interestNames?: string[];
+    ageRestriction: AgeRestriction;
+    durationMinutes: number;
+    posterUrl: string;
+  }>,
+): Promise<Media> {
+  const res = await fetch(`${API_BASE_URL}/media/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to update media: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function deleteMedia(token: string, id: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/media/${id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to delete media: ${res.status}`);
+  }
+}
+
 export interface CreateEpisodePayload {
   seasonNum: number;
   episodeNum: number;
