@@ -82,7 +82,12 @@ export class MediaController {
     @Body() dto: UpdateWatchStatusDto,
     @CurrentUser() user: User,
   ) {
-    return this.mediaService.setWatchStatusForUser(user.id, id, dto.status);
+    return this.mediaService.setWatchStatusForUser(
+      user.id,
+      id,
+      dto.status,
+      user.dateOfBirth,
+    );
   }
 
   @Post()

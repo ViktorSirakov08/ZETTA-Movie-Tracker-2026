@@ -9,7 +9,7 @@ export interface MediaSearchDocument {
   interests: string[];
   releaseDate: string;
   rating: number | null;
-  ageRestricted: boolean;
+  ageRestriction: string;
 }
 
 export function toMediaSearchDocument(media: Media): MediaSearchDocument {
@@ -25,6 +25,6 @@ export function toMediaSearchDocument(media: Media): MediaSearchDocument {
         ? media.releaseDate.toISOString().slice(0, 10)
         : media.releaseDate,
     rating: media.rating,
-    ageRestricted: media.ageRestricted,
+    ageRestriction: media.ageRestriction,
   };
 }

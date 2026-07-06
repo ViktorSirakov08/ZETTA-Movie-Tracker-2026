@@ -5,6 +5,8 @@ import { useParams, Link } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media } from '../types/media';
 import { rateMedia, getUserRating } from '../api/ratings';
+import { getMe } from '../api/auth';
+import { calculateAge, minimumAgeFor } from '../lib/age';
 import './MediaPage.css';
 
 
@@ -15,7 +17,10 @@ export function MediaDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [watchStatus, setWatchStatusState] = useState<string>('NOT_WATCHED');
   const [userRating, setUserRating] = useState<number | null>(null);
-  
+  const [viewerDateOfBirth, setViewerDateOfBirth] = useState<string | null>(null);
+  const [playError, setPlayError] = useState<string | null>(null);
+  const [watchlistNotice, setWatchlistNotice] = useState<string | null>(null);
+
   const [isWatchlistAdded, setIsWatchlistAdded] = useState(() => {
     const saved = localStorage.getItem(`watchlist_${id}`);
     return saved === 'true';
@@ -38,8 +43,14 @@ export function MediaDetailPage() {
     if (token) {
         getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
         getUserRating(token, id).then(setUserRating).catch(() => {});
+        getMe(token).then((user) => setViewerDateOfBirth(user.dateOfBirth)).catch(() => {});
     }
   }, [id]);
+
+  const requiredAge = media ? minimumAgeFor(media.ageRestriction) : 0;
+  const canWatch =
+    requiredAge === 0 ||
+    (viewerDateOfBirth !== null && calculateAge(viewerDateOfBirth) >= requiredAge);
 
   async function updateStatus(status: 'PLANNED_TO_WATCH' | 'WATCHING' | 'WATCHED') {
       const token = getToken();
@@ -57,18 +68,34 @@ export function MediaDetailPage() {
   }
 
   function handlePlay() {
-      updateStatus('WATCHING');
+      if (!canWatch) {
+        setPlayError(`This title is restricted to viewers ${requiredAge}+.`);
+        return;
+      }
+      setPlayError(null);
+      updateStatus('WATCHING').catch((err) => {
+        setPlayError(err instanceof Error ? err.message : 'Unable to play this title.');
+      });
   }
 
   function handleAddToWatchlist() {
     const nextState = !isWatchlistAdded;
     setIsWatchlistAdded(nextState);
     localStorage.setItem(`watchlist_${id}`, String(nextState));
-    
+
     if (nextState) {
         setIsWatchedMarked(false);
         localStorage.removeItem(`watched_${id}`);
         updateStatus('PLANNED_TO_WATCH');
+
+        if (!canWatch && media) {
+          const kind = media.type === 'MOVIE' ? 'movie' : 'series';
+          setWatchlistNotice(
+            `You will be able to watch this ${kind} when you are ${requiredAge}+.`,
+          );
+        }
+    } else {
+      setWatchlistNotice(null);
     }
   }
 
@@ -112,7 +139,7 @@ export function MediaDetailPage() {
               <p className="detail-meta">
                 {releaseYear} · {media.type === 'MOVIE' ? 'Movie' : 'Series'}
                 {media.durationMinutes ? ` · ${media.durationMinutes}m` : ''}
-                {media.ageRestricted ? ' · Age Restricted' : ''}
+                {media.ageRestriction !== 'NONE' ? ` · ${media.ageRestriction === 'PG18' ? 'PG-18' : 'PG-13'}` : ''}
               </p>
             </div>
             <div className="rating-block">
@@ -154,7 +181,10 @@ export function MediaDetailPage() {
           <p className="detail-description">{media.description}</p>
 
           <div className="detail-actions">
-            <button className="action-button action-button--primary" onClick={handlePlay}>
+            <button
+              className="action-button action-button--primary"
+              onClick={handlePlay}
+            >
               ▶ Play
             </button>
             <button className="action-button" onClick={handleAddToWatchlist}>
@@ -164,6 +194,12 @@ export function MediaDetailPage() {
               {isWatchedMarked ? '✓ Marked' : '+ Mark as Watched'}
             </button>
           </div>
+
+          {playError && <p className="detail-age-restriction-notice">{playError}</p>}
+
+          {watchlistNotice && (
+            <p className="detail-age-restriction-notice">{watchlistNotice}</p>
+          )}
 
           {media.type === 'SERIES' && (
             <EpisodeList mediaId={media.id} episodes={media.episodes ?? []} />

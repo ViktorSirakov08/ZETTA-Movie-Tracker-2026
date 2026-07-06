@@ -1,4 +1,4 @@
-import type { Media } from '../types/media';
+import type { AgeRestriction, Media } from '../types/media';
 import { API_BASE_URL } from './client';
 
 export type MediaItem = Media;
@@ -86,7 +86,7 @@ export async function createMedia(
     genreIds: string[];
     interestIds?: string[];
     interestNames?: string[];
-    ageRestricted: boolean;
+    ageRestriction: AgeRestriction;
     durationMinutes?: number;
     posterUrl?: string;
   },

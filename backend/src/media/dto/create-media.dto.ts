@@ -2,7 +2,6 @@ import {
   IsEnum,
   IsString,
   IsDateString,
-  IsBoolean,
   IsOptional,
   IsInt,
   Min,
@@ -11,7 +10,7 @@ import {
   IsIn,
 } from 'class-validator';
 
-import { MediaType } from '../entity/media.entity';
+import { AgeRestriction, MediaType } from '../entity/media.entity';
 import { INTEREST_NAMES } from '../../common/constants/interest-names';
 
 export class CreateMediaDto {
@@ -41,8 +40,8 @@ export class CreateMediaDto {
   @IsIn(INTEREST_NAMES, { each: true })
   interestNames?: string[];
 
-  @IsBoolean()
-  ageRestricted!: boolean;
+  @IsEnum(AgeRestriction)
+  ageRestriction!: AgeRestriction;
 
   @IsOptional()
   @IsInt()

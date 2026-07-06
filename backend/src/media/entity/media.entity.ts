@@ -18,6 +18,12 @@ export enum MediaType {
   SERIES = 'SERIES',
 }
 
+export enum AgeRestriction {
+  NONE = 'NONE',
+  PG13 = 'PG13',
+  PG18 = 'PG18',
+}
+
 @Entity('media')
 export class Media {
   @PrimaryGeneratedColumn('uuid')
@@ -54,8 +60,8 @@ export class Media {
   })
   interests!: Interest[];
 
-  @Column({ default: false })
-  ageRestricted!: boolean;
+  @Column({ type: 'enum', enum: AgeRestriction, default: AgeRestriction.NONE })
+  ageRestriction!: AgeRestriction;
 
   @Column({ type: 'int', nullable: true })
   durationMinutes!: number | null;
