@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
 import { getWatchHistory, type MediaItem } from '../api/media';
+import { formatGenreLabel } from '../constants/interests';
 
 type Category = 'Newest' | 'Highest Rated';
 
@@ -26,7 +27,15 @@ export function HistoryPage() {
       return;
     }
     getWatchHistory(token)
-      .then((items) => setWatched(items))
+      .then((items) => {
+        const stillWatched = items.filter((item) => {
+          const localSavedState = localStorage.getItem(`watched_${item.id}`);
+          
+          return localSavedState !== 'false';
+        });
+        
+        setWatched(stillWatched);
+      })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Unable to load your history.');
       })
@@ -194,7 +203,7 @@ export function HistoryPage() {
                 <div className="genre-row" aria-label="Genres">
                   {item.genres.map((genre) => (
                     <span className="genre-pill" key={genre.id}>
-                      {genre.name}
+                      {formatGenreLabel(genre.name)}
                     </span>
                   ))}
                 </div>

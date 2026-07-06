@@ -5,6 +5,7 @@ import { getToken } from '../lib/auth-storage';
 import { getMe, type AuthUser } from '../api/auth';
 import { fetchMedia } from '../api/media';
 import { fetchGenres } from '../api/genres';
+import { formatGenreLabel } from '../constants/interests';
 import type { Media } from '../types/media';
 import type { Genre } from '../types/genre';
 
@@ -174,7 +175,7 @@ export function HomePage() {
                   <option value="All">All</option>
                   {genres.map((genre) => (
                     <option key={genre.id} value={genre.id}>
-                      {genre.name}
+                      {formatGenreLabel(genre.name)}
                     </option>
                   ))}
                 </select>
@@ -211,14 +212,15 @@ export function HomePage() {
         <div className="media-grid">
           {filteredMedia.map((item) => (
             <article className="media-card" key={item.id}>
-              <div className="media-poster">
-                {item.posterUrl ? (
-                  <img src={item.posterUrl} alt={item.name} />
-                ) : (
-                  <span className="poster-label">Picture</span>
-                )}
-              </div>
-
+              <Link to={`/media/${item.id}`} className="media-card-link" key={item.id}>
+                <div className="media-poster">
+                  {item.posterUrl ? (
+                    <img src={item.posterUrl} alt={item.name} />
+                  ) : (
+                    <span className="poster-label">Picture</span>
+                  )}
+                </div>
+              </Link>
               <div className="media-copy">
                 <div className="media-head">
                   <h2>{item.name}</h2>
@@ -233,7 +235,7 @@ export function HomePage() {
                 <div className="genre-row" aria-label="Genres">
                   {item.genres.map((genre) => (
                     <span className="genre-pill" key={genre.id}>
-                      {genre.name}
+                      {formatGenreLabel(genre.name)}
                     </span>
                   ))}
                 </div>

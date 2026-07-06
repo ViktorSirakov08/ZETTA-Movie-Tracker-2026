@@ -30,6 +30,14 @@ async function fetchMediaListWithAuth(
   return res.json();
 }
 
+export async function fetchMediaById(id: string): Promise<Media> {
+  const res = await fetch(`${API_BASE_URL}/media/${id}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch media: ${res.status}`);
+  }
+  return res.json();
+}
+
 export function getWatchHistory(token: string): Promise<Media[]> {
   return fetchMediaListWithAuth('/media/history', token, 'watch history');
 }
@@ -95,4 +103,36 @@ export async function addEpisode(
     const body = await res.json().catch(() => null);
     throw new Error(body?.message ?? `Failed to add episode: ${res.status}`);
   }
+}
+
+export async function setWatchStatus(
+  token: string,
+  mediaId: string,
+  status: 'NOT_WATCHED' | 'PLANNED_TO_WATCH' | 'WATCHING' | 'WATCHED',
+): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to update status: ${res.status}`);
+  }
+}
+
+export async function getWatchStatus(
+  token: string,
+  mediaId: string,
+): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch watch status: ${res.status}`);
+  }
+  return res.json();
 }

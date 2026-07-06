@@ -12,7 +12,7 @@ import {
   type CreateEpisodePayload,
 } from '../api/media';
 import {
-  GENRE_LABELS,
+  formatGenreLabel,
   GENRE_NAMES,
   INTEREST_LABELS,
   INTEREST_NAMES,
@@ -378,7 +378,7 @@ export function AddMediaPage() {
             >
               {GENRE_NAMES.map((genre) => (
                 <option key={genre} value={genre}>
-                  {GENRE_LABELS[genre]}
+                  {formatGenreLabel(genre)}
                 </option>
               ))}
             </select>
