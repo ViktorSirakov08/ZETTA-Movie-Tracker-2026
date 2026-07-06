@@ -5,6 +5,7 @@ import './WatchlistPage.css';
 import { getToken } from '../lib/auth-storage';
 import { getCurrentlyWatching, getWatchlist } from '../api/media';
 import type { Media } from '../types/media';
+import { formatGenreLabel } from '../constants/interests';
 
 type Category = 'Newest' | 'Highest Rated';
 
@@ -71,7 +72,7 @@ function MediaRow({ items }: { items: Media[] }) {
             <div className="genre-row" aria-label="Genres">
               {item.genres.map((genre) => (
                 <span className="genre-pill" key={genre.id}>
-                  {genre.name}
+                  {formatGenreLabel(genre.name)}
                 </span>
               ))}
             </div>

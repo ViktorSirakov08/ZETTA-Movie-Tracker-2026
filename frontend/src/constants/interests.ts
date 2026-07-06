@@ -146,3 +146,7 @@ export const INTEREST_LABELS: Record<string, string> = Object.fromEntries(
 export const GENRE_LABELS: Record<GenreName, string> = Object.fromEntries(
   GENRE_NAMES.map((genre) => [genre, toTitleCase(genre)]),
 ) as Record<GenreName, string>;
+
+export function formatGenreLabel(name: string): string {
+  return GENRE_LABELS[name as GenreName] ?? toTitleCase(name);
+}

@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
 import { getWatchHistory, type MediaItem } from '../api/media';
+import { formatGenreLabel } from '../constants/interests';
 
 type Category = 'Newest' | 'Highest Rated';
 
@@ -194,7 +195,7 @@ export function HistoryPage() {
                 <div className="genre-row" aria-label="Genres">
                   {item.genres.map((genre) => (
                     <span className="genre-pill" key={genre.id}>
-                      {genre.name}
+                      {formatGenreLabel(genre.name)}
                     </span>
                   ))}
                 </div>

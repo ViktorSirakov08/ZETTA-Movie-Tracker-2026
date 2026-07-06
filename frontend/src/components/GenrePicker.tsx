@@ -1,17 +1,11 @@
 import type { Genre } from '../types/genre';
+import { formatGenreLabel } from '../constants/interests';
 import './InterestPicker.css';
 
 interface GenrePickerProps {
   genres: Genre[];
   selectedIds: Set<string>;
   onToggle: (genreId: string) => void;
-}
-
-function formatGenreName(name: string): string {
-  return name
-    .split('-')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('-');
 }
 
 export function GenrePicker({
@@ -31,7 +25,7 @@ export function GenrePicker({
             aria-pressed={isSelected}
             onClick={() => onToggle(genre.id)}
           >
-            {formatGenreName(genre.name)}
+            {formatGenreLabel(genre.name)}
           </button>
         );
       })}
