@@ -50,10 +50,80 @@ export const GENRE_KEYWORDS: Record<GenreName, string[]> = {
   western: ['western', 'cowboy', 'outlaw', 'frontier'],
 };
 
-/** The specific tags a user can actually pick as their interests. */
-export const INTERESTS = Array.from(
-  new Set(Object.values(GENRE_KEYWORDS).flat()),
-).sort((a, b) => a.localeCompare(b));
+/**
+ * Mirrors backend/src/common/constants/interest-names.ts INTEREST_NAMES.
+ * Keep in sync manually since frontend/backend are separate packages.
+ */
+export const INTEREST_NAMES = [
+  'action',
+  'adventure',
+  'alien',
+  'animation',
+  'anime',
+  'band',
+  'battle',
+  'biopic',
+  'cartoon',
+  'comedy',
+  'conspiracy',
+  'cowboy',
+  'crime',
+  'detective',
+  'detectives',
+  'documentary',
+  'docuseries',
+  'drama',
+  'dystopia',
+  'expedition',
+  'explosion',
+  'family',
+  'fantasy',
+  'fight',
+  'frontier',
+  'heist',
+  'history',
+  'horror',
+  'journey',
+  'kids',
+  'love story',
+  'magic',
+  'martial arts',
+  'melodrama',
+  'military',
+  'monster',
+  'murder',
+  'music',
+  'mystery',
+  'mythical',
+  'outlaw',
+  'parody',
+  'period piece',
+  'psychological',
+  'quest',
+  'romance',
+  'romantic comedy',
+  'sci-fi',
+  'sitcom',
+  'slasher',
+  'space',
+  'stunt',
+  'supernatural',
+  'survival',
+  'suspense',
+  'sword and sorcery',
+  'thriller',
+  'tragedy',
+  'war',
+  'war epic',
+  'western',
+  'whodunit',
+  'zombie',
+] as const;
+
+export type InterestName = (typeof INTEREST_NAMES)[number];
+
+/** @deprecated Use INTEREST_NAMES */
+export const INTERESTS = INTEREST_NAMES;
 
 export type Interest = string;
 
@@ -70,5 +140,9 @@ function toTitleCase(value: string): string {
 }
 
 export const INTEREST_LABELS: Record<string, string> = Object.fromEntries(
-  INTERESTS.map((interest) => [interest, toTitleCase(interest)]),
+  INTEREST_NAMES.map((interest) => [interest, toTitleCase(interest)]),
 );
+
+export const GENRE_LABELS: Record<GenreName, string> = Object.fromEntries(
+  GENRE_NAMES.map((genre) => [genre, toTitleCase(genre)]),
+) as Record<GenreName, string>;

@@ -8,9 +8,11 @@ import {
   Min,
   IsUUID,
   IsArray,
+  IsIn,
 } from 'class-validator';
 
 import { MediaType } from '../entity/media.entity';
+import { INTEREST_NAMES } from '../../common/constants/interest-names';
 
 export class CreateMediaDto {
   @IsEnum(MediaType)
@@ -33,6 +35,11 @@ export class CreateMediaDto {
   @IsArray()
   @IsUUID('4', { each: true })
   interestIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(INTEREST_NAMES, { each: true })
+  interestNames?: string[];
 
   @IsBoolean()
   ageRestricted!: boolean;

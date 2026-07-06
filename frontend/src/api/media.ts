@@ -1,6 +1,5 @@
 import type { Media } from '../types/media';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
+import { API_BASE_URL } from './client';
 
 export type MediaItem = Media;
 
@@ -52,6 +51,7 @@ export async function createMedia(
     description: string;
     genreIds: string[];
     interestIds?: string[];
+    interestNames?: string[];
     ageRestricted: boolean;
     durationMinutes?: number;
     posterUrl?: string;
@@ -70,4 +70,29 @@ export async function createMedia(
     throw new Error(body?.message ?? `Failed to create media: ${res.status}`);
   }
   return res.json();
+}
+
+export interface CreateEpisodePayload {
+  seasonNum: number;
+  episodeNum: number;
+  title: string;
+}
+
+export async function addEpisode(
+  token: string,
+  mediaId: string,
+  data: CreateEpisodePayload,
+): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/episodes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to add episode: ${res.status}`);
+  }
 }
