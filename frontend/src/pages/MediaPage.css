@@ -92,6 +92,38 @@
   text-decoration: none;
 }
 
+.rating-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.user-rating-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.4rem;
+  color: rgba(79, 93, 64, 0.25);
+  padding: 0;
+  line-height: 1;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.star:hover {
+  transform: scale(1.15);
+}
+
+.star--filled {
+  color: var(--sage-dark);
+}
+
 .detail-description {
   line-height: 1.6;
   color: rgba(43, 46, 40, 0.78);

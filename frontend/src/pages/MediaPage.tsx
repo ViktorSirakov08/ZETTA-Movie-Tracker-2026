@@ -4,6 +4,7 @@ import { setWatchStatus, getWatchStatus } from '../api/media';
 import { useParams, Link } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media } from '../types/media';
+import { rateMedia, getUserRating } from '../api/ratings';
 import './MediaPage.css';
 
 
@@ -13,6 +14,7 @@ export function MediaDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [watchStatus, setWatchStatusState] = useState<string>('NOT_WATCHED');
+  const [userRating, setUserRating] = useState<number | null>(null);
   
   const [isWatchlistAdded, setIsWatchlistAdded] = useState(() => {
     const saved = localStorage.getItem(`watchlist_${id}`);
@@ -35,6 +37,7 @@ export function MediaDetailPage() {
 
     if (token) {
         getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
+        getUserRating(token, id).then(setUserRating).catch(() => {});
     }
   }, [id]);
 
@@ -43,6 +46,14 @@ export function MediaDetailPage() {
       if (!token || !id) return;
       await setWatchStatus(token, id, status);
       setWatchStatusState(status);
+  }
+
+  async function handleRate(value: number) {
+    const token = getToken();
+    if (!token || !id) return;
+    await rateMedia(token, id, value);
+    setUserRating(value);
+    fetchMediaById(id).then(setMedia);
   }
 
   function handlePlay() {
@@ -104,12 +115,32 @@ export function MediaDetailPage() {
                 {media.ageRestricted ? ' · Age Restricted' : ''}
               </p>
             </div>
+            <div className="rating-block">
             <span className="detail-rating">
-              {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
+                {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
             </span>
-            <Link to="/home" className="rate-button">
-                Rate?
-            </Link>
+                <div className="user-rating-stars" role="radiogroup" aria-label="Your rating">
+                    <button
+                        type="button"
+                        className={userRating === 0 ? 'star star--filled' : 'star star--zero'}
+                        onClick={() => handleRate(0)}
+                        aria-label="Clear rating"
+                    >
+                        ✕
+                    </button>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                        key={star}
+                        type="button"
+                        className={userRating !== null && star <= userRating ? 'star star--filled' : 'star'}
+                        onClick={() => handleRate(star)}
+                        aria-label={`Rate ${star} stars`}
+                        >
+                        ★
+                        </button>
+                    ))}
+                </div>
+            </div>
           </div>
 
           <div className="genre-row" aria-label="Genres">
