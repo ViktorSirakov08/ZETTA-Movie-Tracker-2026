@@ -100,6 +100,9 @@ export function HomePage() {
         <Link to="/history" className="history-button">
           History
         </Link>
+        <Link to="/watchlist" className="watchlist-button">
+          Watchlist
+        </Link>
 
         {/* Grouping the search and filter elements together */}
         <div className="center-controls">

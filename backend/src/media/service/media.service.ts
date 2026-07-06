@@ -92,11 +92,26 @@ export class MediaService {
     return this.episodeRepo.save(episode);
   }
 
-  async findWatchedByUser(userId: string): Promise<Media[]> {
+  private async findByStatusForUser(
+    userId: string,
+    status: WatchStatus,
+  ): Promise<Media[]> {
     const entries = await this.watchStatusRepo.find({
-      where: { userId, status: WatchStatus.WATCHED },
+      where: { userId, status },
       relations: { media: true },
     });
     return entries.map((entry) => entry.media);
+  }
+
+  findWatchedByUser(userId: string): Promise<Media[]> {
+    return this.findByStatusForUser(userId, WatchStatus.WATCHED);
+  }
+
+  findWatchlistForUser(userId: string): Promise<Media[]> {
+    return this.findByStatusForUser(userId, WatchStatus.PLANNED_TO_WATCH);
+  }
+
+  findCurrentlyWatchingForUser(userId: string): Promise<Media[]> {
+    return this.findByStatusForUser(userId, WatchStatus.WATCHING);
   }
 }
