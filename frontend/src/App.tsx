@@ -5,6 +5,7 @@ import { HomePage } from './pages/HomePage';
 import { ProfilePage } from './pages/ProfilePage';
 import { HistoryPage } from './pages/HistoryPage';
 import { WatchlistPage } from './pages/WatchlistPage';
+import { MediaDetailPage } from './pages/MediaPage';
 
 function App() {
   return (
@@ -13,10 +14,11 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/home" element={<HomePage />} />
+        <Route path="/home/*" element={<HomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/history" element={<HistoryPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
+        <Route path="/media/:id" element={<MediaDetailPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

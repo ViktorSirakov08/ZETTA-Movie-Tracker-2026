@@ -31,6 +31,14 @@ async function fetchMediaListWithAuth(
   return res.json();
 }
 
+export async function fetchMediaById(id: string): Promise<Media> {
+  const res = await fetch(`${API_BASE_URL}/media/${id}`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch media: ${res.status}`);
+  }
+  return res.json();
+}
+
 export function getWatchHistory(token: string): Promise<Media[]> {
   return fetchMediaListWithAuth('/media/history', token, 'watch history');
 }
