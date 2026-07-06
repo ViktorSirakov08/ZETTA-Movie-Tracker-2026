@@ -20,6 +20,13 @@ import {
 import { getToken } from '../lib/auth-storage';
 
 type MediaType = 'MOVIE' | 'SERIES';
+type AgeRestriction = 'none' | '13' | '18';
+
+const AGE_RESTRICTION_OPTIONS: { value: AgeRestriction; label: string }[] = [
+  { value: 'none', label: 'None' },
+  { value: '13', label: '13+' },
+  { value: '18', label: '18+' },
+];
 
 interface EpisodeDraft {
   key: string;
@@ -31,8 +38,8 @@ interface EpisodeDraft {
 function createEpisodeDraft(): EpisodeDraft {
   return {
     key: crypto.randomUUID(),
-    seasonNum: '1',
-    episodeNum: '1',
+    seasonNum: '',
+    episodeNum: '',
     title: '',
   };
 }
@@ -76,7 +83,7 @@ export function AddMediaPage() {
   const [selectedInterestNames, setSelectedInterestNames] = useState<string[]>(
     [],
   );
-  const [ageRestricted, setAgeRestricted] = useState(false);
+  const [ageRestriction, setAgeRestriction] = useState<AgeRestriction>('none');
   const [posterUrl, setPosterUrl] = useState('');
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [episodes, setEpisodes] = useState<EpisodeDraft[]>([
@@ -239,7 +246,8 @@ export function AddMediaPage() {
         genreIds,
         interestNames:
           selectedInterestNames.length > 0 ? selectedInterestNames : undefined,
-        ageRestricted,
+        ageRestricted: ageRestriction === '18',
+        ageRestricted13: ageRestriction === '13',
         durationMinutes: parsedDuration,
         posterUrl: posterUrl.trim() || undefined,
       });
@@ -384,7 +392,7 @@ export function AddMediaPage() {
 
           <div className="field">
             <label htmlFor="genres">Genres</label>
-            <p className="field-hint">Hold Ctrl (or Cmd) to select multiple.</p>
+            <p className="field-hint">Hold Ctrl to select multiple.</p>
             <select
               id="genres"
               multiple
@@ -404,7 +412,7 @@ export function AddMediaPage() {
 
           <div className="field">
             <label htmlFor="interests">Interests</label>
-            <p className="field-hint">Hold Ctrl (or Cmd) to select multiple.</p>
+            <p className="field-hint">Hold Ctrl to select multiple.</p>
             <select
               id="interests"
               multiple
@@ -421,14 +429,22 @@ export function AddMediaPage() {
             </select>
           </div>
 
-          <div className="field field-checkbox">
-            <input
-              id="age-restricted"
-              type="checkbox"
-              checked={ageRestricted}
-              onChange={(e) => setAgeRestricted(e.target.checked)}
-            />
-            <label htmlFor="age-restricted">Age restricted (18+)</label>
+          <div className="field">
+            <label htmlFor="age-restriction">Age restriction</label>
+            <select
+              id="age-restriction"
+              size={AGE_RESTRICTION_OPTIONS.length}
+              value={ageRestriction}
+              onChange={(event) =>
+                setAgeRestriction(event.target.value as AgeRestriction)
+              }
+            >
+              {AGE_RESTRICTION_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           {mediaType === 'SERIES' && (
@@ -438,11 +454,10 @@ export function AddMediaPage() {
                 {episodes.map((episode) => (
                   <div key={episode.key} className="episode-row">
                     <input
-                      type="number"
-                      min="1"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
                       aria-label="Season number"
-                      placeholder="S"
+                      placeholder="Season"
                       value={episode.seasonNum}
                       onChange={(e) =>
                         updateEpisode(episode.key, 'seasonNum', e.target.value)
@@ -450,11 +465,10 @@ export function AddMediaPage() {
                       required
                     />
                     <input
-                      type="number"
-                      min="1"
-                      step="1"
+                      type="text"
+                      inputMode="numeric"
                       aria-label="Episode number"
-                      placeholder="E"
+                      placeholder="Episode"
                       value={episode.episodeNum}
                       onChange={(e) =>
                         updateEpisode(episode.key, 'episodeNum', e.target.value)

@@ -18,6 +18,7 @@ export interface Media {
   genres: Genre[];
   interests: MediaInterest[];
   ageRestricted: boolean;
+  ageRestricted13: boolean;
   durationMinutes: number | null;
   posterUrl: string | null;
   episodes?: Episode[] | null;

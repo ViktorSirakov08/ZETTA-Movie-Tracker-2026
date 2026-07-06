@@ -57,6 +57,9 @@ export class Media {
   @Column({ default: false })
   ageRestricted!: boolean;
 
+  @Column({ name: 'age_restricted_13', default: false })
+  ageRestricted13!: boolean;
+
   @Column({ type: 'int', nullable: true })
   durationMinutes!: number | null;
 

@@ -112,7 +112,8 @@ export function MediaDetailPage() {
               <p className="detail-meta">
                 {releaseYear} · {media.type === 'MOVIE' ? 'Movie' : 'Series'}
                 {media.durationMinutes ? ` · ${media.durationMinutes}m` : ''}
-                {media.ageRestricted ? ' · Age Restricted' : ''}
+                {media.ageRestricted13 ? ' · 13+' : ''}
+                {media.ageRestricted ? ' · 18+' : ''}
               </p>
             </div>
             <div className="rating-block">

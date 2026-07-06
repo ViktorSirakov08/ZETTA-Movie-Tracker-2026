@@ -46,6 +46,9 @@ export class CreateMediaDto {
   @IsBoolean()
   ageRestricted!: boolean;
 
+  @IsBoolean()
+  ageRestricted13!: boolean;
+
   @IsOptional()
   @IsInt()
   @Min(1)

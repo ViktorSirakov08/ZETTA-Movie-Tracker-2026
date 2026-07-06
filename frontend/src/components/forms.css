@@ -116,17 +116,20 @@
   cursor: not-allowed;
 }
 
-.field select[multiple] {
+.field select[multiple],
+.field select[size] {
   min-height: 140px;
   padding: 8px 10px;
 }
 
-.field select[multiple] option {
+.field select[multiple] option,
+.field select[size] option {
   padding: 6px 8px;
   border-radius: 6px;
 }
 
-.field select[multiple] option:checked {
+.field select[multiple] option:checked,
+.field select[size] option:checked {
   background: var(--color-sage-dark);
   color: #fff;
 }

@@ -61,6 +61,7 @@ export async function createMedia(
     interestIds?: string[];
     interestNames?: string[];
     ageRestricted: boolean;
+    ageRestricted13: boolean;
     durationMinutes?: number;
     posterUrl?: string;
   },
