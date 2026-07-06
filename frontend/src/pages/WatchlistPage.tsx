@@ -15,22 +15,16 @@ const categories: Category[] = ['Newest', 'Highest Rated'];
 function filterAndSort(
   items: Media[],
   searchResults: Media[] | null,
-  selectedGenre: string,
   selectedCategory: Category,
 ): Media[] {
   const baseList = searchResults ? intersectByRelevance(searchResults, items) : items;
 
-  return [...baseList]
-    .filter(
-      (item) =>
-        selectedGenre === 'All' || item.genres.some((g) => g.name === selectedGenre),
-    )
-    .sort((a, b) => {
-      if (selectedCategory === 'Highest Rated') {
-        return (b.rating ?? 0) - (a.rating ?? 0);
-      }
-      return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime();
-    });
+  return [...baseList].sort((a, b) => {
+    if (selectedCategory === 'Highest Rated') {
+      return (b.rating ?? 0) - (a.rating ?? 0);
+    }
+    return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime();
+  });
 }
 
 function MediaRow({ items }: { items: Media[] }) {
@@ -84,10 +78,14 @@ export function WatchlistPage() {
   const [loading, setLoading] = useState(true);
 
   const [query, setQuery] = useState('');
-  const { results: searchResults, searching } = useMediaSearch(query);
   const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const { results: searchResults, searching } = useMediaSearch({
+    query,
+    genre: selectedGenre === 'All' ? undefined : selectedGenre,
+  });
 
   useEffect(() => {
     if (!token) {
@@ -115,13 +113,12 @@ export function WatchlistPage() {
   }, [watchlist, currentlyWatching]);
 
   const filteredWatchlist = useMemo(
-    () => filterAndSort(watchlist, searchResults, selectedGenre, selectedCategory),
-    [watchlist, searchResults, selectedGenre, selectedCategory],
+    () => filterAndSort(watchlist, searchResults, selectedCategory),
+    [watchlist, searchResults, selectedCategory],
   );
   const filteredCurrentlyWatching = useMemo(
-    () =>
-      filterAndSort(currentlyWatching, searchResults, selectedGenre, selectedCategory),
-    [currentlyWatching, searchResults, selectedGenre, selectedCategory],
+    () => filterAndSort(currentlyWatching, searchResults, selectedCategory),
+    [currentlyWatching, searchResults, selectedCategory],
   );
 
   if (!token) {

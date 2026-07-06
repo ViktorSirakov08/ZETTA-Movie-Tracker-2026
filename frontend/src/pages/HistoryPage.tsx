@@ -18,11 +18,15 @@ export function HistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const [query, setQuery] = useState('');
-  const { results: searchResults, searching } = useMediaSearch(query);
   const [selectedCategory, setSelectedCategory] =
     useState<Category>('Newest');
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const { results: searchResults, searching } = useMediaSearch({
+    query,
+    genre: selectedGenre === 'All' ? undefined : selectedGenre,
+  });
 
   useEffect(() => {
     if (!token) {
@@ -51,21 +55,15 @@ export function HistoryPage() {
       ? intersectByRelevance(searchResults, watched)
       : watched;
 
-    return [...baseList]
-      .filter(
-        (item) =>
-          selectedGenre === 'All' ||
-          item.genres.some((g) => g.name === selectedGenre),
-      )
-      .sort((a, b) => {
-        if (selectedCategory === 'Highest Rated') {
-          return (b.rating ?? 0) - (a.rating ?? 0);
-        }
-        return (
-          new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
-        );
-      });
-  }, [watched, searchResults, selectedGenre, selectedCategory]);
+    return [...baseList].sort((a, b) => {
+      if (selectedCategory === 'Highest Rated') {
+        return (b.rating ?? 0) - (a.rating ?? 0);
+      }
+      return (
+        new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+      );
+    });
+  }, [watched, searchResults, selectedCategory]);
 
   if (!token) {
     return <Navigate to="/login" replace />;

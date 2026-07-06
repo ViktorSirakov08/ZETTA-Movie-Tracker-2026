@@ -45,8 +45,16 @@ export class MediaController {
   }
 
   @Get('search')
-  search(@Query('q') query: string) {
-    return this.mediaService.search(query ?? '');
+  search(
+    @Query('q') query?: string,
+    @Query('genre') genre?: string,
+    @Query('interests') interests?: string,
+  ) {
+    return this.mediaService.search({
+      query,
+      genre,
+      interests: interests ? interests.split(',').filter(Boolean) : undefined,
+    });
   }
 
   @UseGuards(JwtAuthGuard)

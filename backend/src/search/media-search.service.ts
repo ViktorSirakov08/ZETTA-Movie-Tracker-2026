@@ -91,17 +91,42 @@ export class MediaSearchService implements OnModuleInit {
    * still comes from Postgres (see MediaService.search), so callers always
    * get the same shape as every other media endpoint (posterUrl, real
    * Genre/Interest objects, etc.), not the flattened search document.
+   *
+   * `genre`/`interests` are applied as exact-match filters (both fields are
+   * `keyword` in the mapping) alongside the free-text query, so a genre or
+   * interest filter works even with no typed text — that just becomes
+   * `match_all` + filter.
    */
-  async searchIds(query: string): Promise<string[]> {
+  async searchIds(params: {
+    query?: string;
+    genre?: string;
+    interests?: string[];
+  }): Promise<string[]> {
+    const trimmedQuery = params.query?.trim();
+
+    const filter: Record<string, unknown>[] = [];
+    if (params.genre) {
+      filter.push({ term: { genres: params.genre } });
+    }
+    if (params.interests?.length) {
+      filter.push({ terms: { interests: params.interests } });
+    }
+
+    const must = trimmedQuery
+      ? [
+          {
+            multi_match: {
+              query: trimmedQuery,
+              type: 'bool_prefix' as const,
+              fields: ['name^2', 'description', 'genres', 'interests'],
+            },
+          },
+        ]
+      : [{ match_all: {} }];
+
     const result = await this.es.search<MediaSearchDocument>({
       index: MEDIA_INDEX,
-      query: {
-        multi_match: {
-          query,
-          type: 'bool_prefix',
-          fields: ['name^2', 'description', 'genres', 'interests'],
-        },
-      },
+      query: { bool: { must, filter } },
     });
 
     return result.hits.hits

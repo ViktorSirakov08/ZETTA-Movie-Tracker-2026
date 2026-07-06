@@ -23,7 +23,6 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState('');
-  const { results: searchResults, searching } = useMediaSearch(query);
   const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
   const [selectedGenreId, setSelectedGenreId] = useState<string>('All');
   const [searchByInterests, setSearchByInterests] = useState(false);
@@ -42,35 +41,34 @@ export function HomePage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  // The search index stores genre/interest names, not ids, so the id picked
+  // in the dropdown has to be resolved to a name before it's sent to /media/search.
+  const selectedGenreName = useMemo(() => {
+    if (selectedGenreId === 'All') return undefined;
+    return genres.find((genre) => genre.id === selectedGenreId)?.name;
+  }, [selectedGenreId, genres]);
+
+  const { results: searchResults, searching } = useMediaSearch({
+    query,
+    genre: selectedGenreName,
+    interests: searchByInterests ? currentUser?.interests : undefined,
+  });
+
   const filteredMedia = useMemo(() => {
     const baseList = searchResults ?? media;
 
-    return [...baseList]
-      .filter((item) => {
-        const matchesGenre =
-          selectedGenreId === 'All' ||
-          item.genres.some((g) => g.id === selectedGenreId);
+    return [...baseList].sort((a, b) => {
+      const ratingA = a.rating ?? 0;
+      const ratingB = b.rating ?? 0;
+      const yearA = new Date(a.releaseDate).getFullYear();
+      const yearB = new Date(b.releaseDate).getFullYear();
 
-        const matchesInterest = searchByInterests
-          ? item.interests.some((interest) =>
-              (currentUser?.interests ?? []).includes(interest.name),
-            )
-          : true;
-
-        return matchesGenre && matchesInterest;
-      })
-      .sort((a, b) => {
-        const ratingA = a.rating ?? 0;
-        const ratingB = b.rating ?? 0;
-        const yearA = new Date(a.releaseDate).getFullYear();
-        const yearB = new Date(b.releaseDate).getFullYear();
-
-        if (selectedCategory === 'Highest Rated') {
-          return ratingB - ratingA || yearB - yearA;
-        }
-        return yearB - yearA || ratingB - ratingA;
-      });
-  }, [media, searchResults, searchByInterests, selectedCategory, selectedGenreId, currentUser]);
+      if (selectedCategory === 'Highest Rated') {
+        return ratingB - ratingA || yearB - yearA;
+      }
+      return yearB - yearA || ratingB - ratingA;
+    });
+  }, [media, searchResults, selectedCategory]);
 
   if (!token) {
     return <Navigate to="/login" replace />;

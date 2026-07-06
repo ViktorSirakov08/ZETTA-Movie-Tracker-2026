@@ -12,10 +12,26 @@ export async function fetchMedia(): Promise<Media[]> {
   return res.json();
 }
 
-export async function searchMedia(query: string): Promise<Media[]> {
-  const res = await fetch(
-    `${API_BASE_URL}/media/search?q=${encodeURIComponent(query)}`,
-  );
+export interface SearchMediaParams {
+  query?: string;
+  genre?: string;
+  interests?: string[];
+}
+
+export async function searchMedia(params: SearchMediaParams): Promise<Media[]> {
+  const searchParams = new URLSearchParams();
+  const trimmedQuery = params.query?.trim();
+  if (trimmedQuery) {
+    searchParams.set('q', trimmedQuery);
+  }
+  if (params.genre) {
+    searchParams.set('genre', params.genre);
+  }
+  if (params.interests?.length) {
+    searchParams.set('interests', params.interests.join(','));
+  }
+
+  const res = await fetch(`${API_BASE_URL}/media/search?${searchParams.toString()}`);
   if (!res.ok) {
     throw new Error(`Failed to search media: ${res.status}`);
   }

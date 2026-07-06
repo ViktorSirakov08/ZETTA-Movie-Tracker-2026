@@ -147,12 +147,17 @@ export class MediaService {
     return this.findByStatusForUser(userId, WatchStatus.WATCHING);
   }
 
-  async search(query: string): Promise<Media[]> {
-    if (!query.trim()) {
+  async search(params: {
+    query?: string;
+    genre?: string;
+    interests?: string[];
+  }): Promise<Media[]> {
+    const hasFilters = Boolean(params.genre) || Boolean(params.interests?.length);
+    if (!params.query?.trim() && !hasFilters) {
       return this.findAll();
     }
 
-    const ids = await this.mediaSearchService.searchIds(query);
+    const ids = await this.mediaSearchService.searchIds(params);
     if (ids.length === 0) {
       return [];
     }
