@@ -98,8 +98,8 @@ export class MediaSearchService implements OnModuleInit {
       query: {
         multi_match: {
           query,
+          type: 'bool_prefix',
           fields: ['name^2', 'description', 'genres', 'interests'],
-          fuzziness: 'AUTO',
         },
       },
     });
