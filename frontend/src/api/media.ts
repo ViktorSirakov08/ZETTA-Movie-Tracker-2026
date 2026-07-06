@@ -12,8 +12,12 @@ export async function fetchMedia(): Promise<Media[]> {
   return res.json();
 }
 
-export async function getWatchHistory(token: string): Promise<Media[]> {
-  const res = await fetch(`${API_BASE_URL}/media/history`, {
+async function fetchMediaListWithAuth(
+  path: string,
+  token: string,
+  failureLabel: string,
+): Promise<Media[]> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -21,10 +25,22 @@ export async function getWatchHistory(token: string): Promise<Media[]> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => null);
-    throw new Error(body?.message ?? `Failed to fetch watch history: ${res.status}`);
+    throw new Error(body?.message ?? `Failed to fetch ${failureLabel}: ${res.status}`);
   }
 
   return res.json();
+}
+
+export function getWatchHistory(token: string): Promise<Media[]> {
+  return fetchMediaListWithAuth('/media/history', token, 'watch history');
+}
+
+export function getWatchlist(token: string): Promise<Media[]> {
+  return fetchMediaListWithAuth('/media/watchlist', token, 'watchlist');
+}
+
+export function getCurrentlyWatching(token: string): Promise<Media[]> {
+  return fetchMediaListWithAuth('/media/watching', token, 'currently watching list');
 }
 
 export async function createMedia(

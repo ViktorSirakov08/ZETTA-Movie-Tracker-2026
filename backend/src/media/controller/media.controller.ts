@@ -31,6 +31,18 @@ export class MediaController {
     return this.mediaService.findWatchedByUser(user.id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('watchlist')
+  findWatchlist(@CurrentUser() user: User) {
+    return this.mediaService.findWatchlistForUser(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('watching')
+  findCurrentlyWatching(@CurrentUser() user: User) {
+    return this.mediaService.findCurrentlyWatchingForUser(user.id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.mediaService.findOne(id);
