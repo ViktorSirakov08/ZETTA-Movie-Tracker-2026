@@ -50,6 +50,18 @@ function readMultiSelectValues(event: ChangeEvent<HTMLSelectElement>): string[] 
   return Array.from(event.target.selectedOptions, (option) => option.value);
 }
 
+function getTodayIsoDate(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function isFutureDate(dateStr: string): boolean {
+  return dateStr > getTodayIsoDate();
+}
+
 export function AddMediaPage() {
   const token = getToken();
   const navigate = useNavigate();
@@ -186,15 +198,20 @@ export function AddMediaPage() {
       return;
     }
 
+    if (isFutureDate(releaseDate)) {
+      setError('Release date cannot be in the future.');
+      return;
+    }
+
     const parsedDuration = durationMinutes.trim()
       ? Number(durationMinutes)
       : undefined;
 
     if (
       parsedDuration !== undefined &&
-      (!Number.isInteger(parsedDuration) || parsedDuration < 0)
+      (!Number.isInteger(parsedDuration) || parsedDuration <= 0)
     ) {
-      setError('Duration must be a whole number of minutes.');
+      setError('Duration must be a whole number greater than zero.');
       return;
     }
 
@@ -334,6 +351,7 @@ export function AddMediaPage() {
               <input
                 id="release-date"
                 type="date"
+                max={getTodayIsoDate()}
                 value={releaseDate}
                 onChange={(e) => setReleaseDate(e.target.value)}
                 required
@@ -345,7 +363,7 @@ export function AddMediaPage() {
               <input
                 id="duration"
                 type="number"
-                min="0"
+                min="1"
                 step="1"
                 placeholder={mediaType === 'MOVIE' ? '120' : 'Optional'}
                 value={durationMinutes}
