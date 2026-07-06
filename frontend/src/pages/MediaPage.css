@@ -81,6 +81,17 @@
   font-weight: 700;
 }
 
+.rate-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0.5rem 0.9rem;
+  color: var(--sage-dark);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .detail-description {
   line-height: 1.6;
   color: rgba(43, 46, 40, 0.78);

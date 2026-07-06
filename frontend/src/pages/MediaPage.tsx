@@ -1,33 +1,76 @@
 import { useEffect, useState } from 'react';
+import { getToken } from '../lib/auth-storage';
+import { setWatchStatus, getWatchStatus } from '../api/media';
 import { useParams, Link } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media } from '../types/media';
 import './MediaPage.css';
+
 
 export function MediaDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [media, setMedia] = useState<Media | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [watchStatus, setWatchStatusState] = useState<string>('NOT_WATCHED');
+  
+  const [isWatchlistAdded, setIsWatchlistAdded] = useState(() => {
+    const saved = localStorage.getItem(`watchlist_${id}`);
+    return saved === 'true';
+  });
+
+  const [isWatchedMarked, setIsWatchedMarked] = useState(() => {
+    const saved = localStorage.getItem(`watched_${id}`);
+    return saved === 'true';
+  });
 
   useEffect(() => {
     if (!id) return;
+    const token = getToken();
+
     fetchMediaById(id)
-      .then(setMedia)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+        .then(setMedia)
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+
+    if (token) {
+        getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
+    }
   }, [id]);
 
-  function handleAddToWatchlist() {
-    alert('Watchlist feature coming soon.');
-  }
-
-  function handleMarkAsWatched() {
-    alert('Mark as watched feature coming soon.');
+  async function updateStatus(status: 'PLANNED_TO_WATCH' | 'WATCHING' | 'WATCHED') {
+      const token = getToken();
+      if (!token || !id) return;
+      await setWatchStatus(token, id, status);
+      setWatchStatusState(status);
   }
 
   function handlePlay() {
-    alert('Currently Watching feature coming soon.');
+      updateStatus('WATCHING');
+  }
+
+  function handleAddToWatchlist() {
+    const nextState = !isWatchlistAdded;
+    setIsWatchlistAdded(nextState);
+    localStorage.setItem(`watchlist_${id}`, String(nextState));
+    
+    if (nextState) {
+        setIsWatchedMarked(false);
+        localStorage.removeItem(`watched_${id}`);
+        updateStatus('PLANNED_TO_WATCH');
+    }
+  }
+
+  function handleMarkAsWatched() {
+    const nextState = !isWatchedMarked;
+    setIsWatchedMarked(nextState);
+    localStorage.setItem(`watched_${id}`, String(nextState));
+    
+    if (nextState) {
+        setIsWatchlistAdded(false);
+        localStorage.removeItem(`watchlist_${id}`);
+        updateStatus('WATCHED');
+    }
   }
 
   if (loading) return <div className="detail-status">Loading...</div>;
@@ -64,6 +107,9 @@ export function MediaDetailPage() {
             <span className="detail-rating">
               {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
             </span>
+            <Link to="/home" className="rate-button">
+                Rate?
+            </Link>
           </div>
 
           <div className="genre-row" aria-label="Genres">
@@ -81,10 +127,10 @@ export function MediaDetailPage() {
               ▶ Play
             </button>
             <button className="action-button" onClick={handleAddToWatchlist}>
-              + Add to Watchlist
+              {isWatchlistAdded ? '✓ Added to Watchlist' : '+ Add to Watchlist'}
             </button>
             <button className="action-button" onClick={handleMarkAsWatched}>
-              ✓ Mark as Watched
+              {isWatchedMarked ? '✓ Marked' : '+ Mark as Watched'}
             </button>
           </div>
 

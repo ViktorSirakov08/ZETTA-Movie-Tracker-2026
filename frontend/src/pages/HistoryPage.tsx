@@ -26,7 +26,15 @@ export function HistoryPage() {
       return;
     }
     getWatchHistory(token)
-      .then((items) => setWatched(items))
+      .then((items) => {
+        const stillWatched = items.filter((item) => {
+          const localSavedState = localStorage.getItem(`watched_${item.id}`);
+          
+          return localSavedState !== 'false';
+        });
+        
+        setWatched(stillWatched);
+      })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Unable to load your history.');
       })

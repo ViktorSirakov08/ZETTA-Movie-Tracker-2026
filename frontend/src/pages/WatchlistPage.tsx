@@ -99,10 +99,23 @@ export function WatchlistPage() {
     if (!token) {
       return;
     }
+
     Promise.all([getWatchlist(token), getCurrentlyWatching(token)])
       .then(([plannedItems, watchingItems]) => {
-        setWatchlist(plannedItems);
-        setCurrentlyWatching(watchingItems);
+        const filteredWatchlist = plannedItems.filter((item) => {
+          const isExplicitlyWatched = localStorage.getItem(`watched_${item.id}`) === 'true';
+          const isRemovedFromWatchlist = localStorage.getItem(`watchlist_${item.id}`) === 'false';
+          
+          return !isExplicitlyWatched && !isRemovedFromWatchlist;
+        });
+
+        const filteredCurrentlyWatching = watchingItems.filter((item) => {
+          const isExplicitlyWatched = localStorage.getItem(`watched_${item.id}`) === 'true';
+          return !isExplicitlyWatched;
+        });
+
+        setWatchlist(filteredWatchlist);
+        setCurrentlyWatching(filteredCurrentlyWatching);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Unable to load your lists.');
