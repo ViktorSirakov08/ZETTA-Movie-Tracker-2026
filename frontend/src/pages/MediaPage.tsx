@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { getToken } from '../lib/auth-storage';
 import { setWatchStatus, getWatchStatus } from '../api/media';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media } from '../types/media';
 import { rateMedia, getUserRating } from '../api/ratings';
+import { getMe, type AuthUser } from '../api/auth'; // Reusing your Auth API imports
 import './MediaPage.css';
-
 
 export function MediaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +15,18 @@ export function MediaDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [watchStatus, setWatchStatusState] = useState<string>('NOT_WATCHED');
   const [userRating, setUserRating] = useState<number | null>(null);
+  const navigate = useNavigate();
   
+  // Reusing Auth state matching HomePage pattern
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  
+  // Inline Editor Panel UI States
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPosterUrl, setEditPosterUrl] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [isWatchlistAdded, setIsWatchlistAdded] = useState(() => {
     const saved = localStorage.getItem(`watchlist_${id}`);
     return saved === 'true';
@@ -30,10 +41,22 @@ export function MediaDetailPage() {
     if (!id) return;
     const token = getToken();
 
-    fetchMediaById(id)
-        .then(setMedia)
-        .catch((err) => setError(err.message))
-        .finally(() => setLoading(false));
+    // Reusing the native sequential batch pipeline pattern from your home file
+    Promise.all([
+      fetchMediaById(id),
+      token ? getMe(token) : Promise.resolve(null)
+    ])
+      .then(([mediaData, user]) => {
+        setMedia(mediaData);
+        setCurrentUser(user);
+        
+        // Map edit fields data on initial mount
+        setEditName(mediaData.name);
+        setEditDescription(mediaData.description);
+        setEditPosterUrl(mediaData.posterUrl ?? '');
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
 
     if (token) {
         getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
@@ -54,6 +77,38 @@ export function MediaDetailPage() {
     await rateMedia(token, id, value);
     setUserRating(value);
     fetchMediaById(id).then(setMedia);
+  }
+
+  async function handleSaveChanges(e: React.FormEvent) {
+    e.preventDefault();
+    const token = getToken();
+    if (!token || !id) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`http://localhost:3000/media/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: editName,
+          description: editDescription,
+          posterUrl: editPosterUrl || null,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update media data.');
+
+      const updated = await fetchMediaById(id);
+      setMedia(updated);
+      setIsEditing(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error updating data.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handlePlay() {
@@ -81,6 +136,30 @@ export function MediaDetailPage() {
         setIsWatchlistAdded(false);
         localStorage.removeItem(`watchlist_${id}`);
         updateStatus('WATCHED');
+    }
+  }
+
+  async function handleDeleteMedia() {
+    const confirmDelete = window.confirm("Are you sure you want to delete this media item? This cannot be undone.");
+    if (!confirmDelete) return;
+
+    const token = getToken();
+    if (!token || !id) return;
+
+    try {
+        const response = await fetch(`http://localhost:3000/media/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+        });
+
+        if (!response.ok) throw new Error('Failed to delete media item.');
+
+        // Redirect to home page instantly upon successful deletion
+        navigate('/home');
+    } catch (err) {
+        alert(err instanceof Error ? err.message : 'Error deleting media.');
     }
   }
 
@@ -163,7 +242,67 @@ export function MediaDetailPage() {
             <button className="action-button" onClick={handleMarkAsWatched}>
               {isWatchedMarked ? '✓ Marked' : '+ Mark as Watched'}
             </button>
+            {currentUser?.role === 'admin' && (
+              <button 
+                type="button" 
+                className="action-button action-button--primary" 
+                onClick={() => setIsEditing((prev) => !prev)}
+              >
+                ✎ Edit Media
+              </button>
+            )}
           </div>
+
+          {isEditing && (
+            <form className="edit-media-panel" onSubmit={handleSaveChanges}>
+              <h3>Edit Media Details</h3>
+              <div className="field">
+                <label htmlFor="edit-title">Title</label>
+                <input 
+                  id="edit-title"
+                  type="text" 
+                  value={editName} 
+                  onChange={(e) => setEditName(e.target.value)} 
+                  required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="edit-poster">Poster URL</label>
+                <input 
+                  id="edit-poster"
+                  type="url" 
+                  value={editPosterUrl} 
+                  onChange={(e) => setEditPosterUrl(e.target.value)} 
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="edit-desc">Description</label>
+                <textarea 
+                  id="edit-desc"
+                  rows={4}
+                  value={editDescription} 
+                  onChange={(e) => setEditDescription(e.target.value)} 
+                  required
+                />
+              </div>
+              <div className="form-panel-buttons">
+                <button type="submit" className="action-button action-button--primary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button type="button" className="action-button" onClick={() => setIsEditing(false)}>
+                  Cancel
+                </button>
+                <button 
+                type="button" 
+                className="action-button action-button--danger" 
+                onClick={handleDeleteMedia}
+                style={{ marginRight: 'auto' }}
+            >
+                🗑 Delete Media
+              </button>
+              </div>
+            </form>
+          )}
 
           {media.type === 'SERIES' && (
             <EpisodeList mediaId={media.id} episodes={media.episodes ?? []} />
