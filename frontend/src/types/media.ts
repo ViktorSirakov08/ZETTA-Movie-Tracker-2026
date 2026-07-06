@@ -20,4 +20,13 @@ export interface Media {
   ageRestricted: boolean;
   durationMinutes: number | null;
   posterUrl: string | null;
+  episodes?: Episode[] | null;
+}
+
+export interface Episode {
+  id: string;
+  mediaId: string;
+  seasonNum: number;
+  episodeNum: number;
+  title: string;
 }

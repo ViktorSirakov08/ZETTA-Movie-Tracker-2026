@@ -49,14 +49,15 @@ function MediaRow({ items }: { items: Media[] }) {
     <div className="media-row">
       {items.map((item) => (
         <article className="media-card" key={item.id}>
-          <div className="media-poster">
-            {item.posterUrl ? (
-              <img src={item.posterUrl} alt={item.name} />
-            ) : (
-              <span className="poster-label">Picture</span>
-            )}
-          </div>
-
+          <Link to={`/media/${item.id}`} className="media-card-link" key={item.id}>
+            <div className="media-poster">
+              {item.posterUrl ? (
+                <img src={item.posterUrl} alt={item.name} />
+              ) : (
+                <span className="poster-label">Picture</span>
+              )}
+            </div>
+          </Link>
           <div className="media-copy">
             <div className="media-head">
               <h2>{item.name}</h2>
@@ -99,10 +100,23 @@ export function WatchlistPage() {
     if (!token) {
       return;
     }
+
     Promise.all([getWatchlist(token), getCurrentlyWatching(token)])
       .then(([plannedItems, watchingItems]) => {
-        setWatchlist(plannedItems);
-        setCurrentlyWatching(watchingItems);
+        const filteredWatchlist = plannedItems.filter((item) => {
+          const isExplicitlyWatched = localStorage.getItem(`watched_${item.id}`) === 'true';
+          const isRemovedFromWatchlist = localStorage.getItem(`watchlist_${item.id}`) === 'false';
+          
+          return !isExplicitlyWatched && !isRemovedFromWatchlist;
+        });
+
+        const filteredCurrentlyWatching = watchingItems.filter((item) => {
+          const isExplicitlyWatched = localStorage.getItem(`watched_${item.id}`) === 'true';
+          return !isExplicitlyWatched;
+        });
+
+        setWatchlist(filteredWatchlist);
+        setCurrentlyWatching(filteredCurrentlyWatching);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Unable to load your lists.');
