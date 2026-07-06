@@ -13,6 +13,7 @@ import { CreateMediaDto } from '../dto/create-media.dto';
 import { UpdateMediaDto } from '../dto/update-media.dto';
 import { CreateEpisodeDto } from '../dto/create-episode.dto';
 import { MediaSearchService } from '../../search/media-search.service';
+import { InterestsService } from '../../interests/interests.service';
 
 @Injectable()
 export class MediaService {
@@ -21,6 +22,7 @@ export class MediaService {
   constructor(
     @InjectRepository(Genre) private genreRepo: Repository<Genre>,
     @InjectRepository(Interest) private interestRepo: Repository<Interest>,
+    private readonly interestsService: InterestsService,
     @InjectRepository(Media)
     private mediaRepo: Repository<Media>,
     @InjectRepository(Episode)
@@ -71,12 +73,15 @@ export class MediaService {
   }
 
   async create(dto: CreateMediaDto): Promise<Media> {
-    const { genreIds, interestIds, ...rest } = dto;
+    const { genreIds, interestIds, interestNames, ...rest } = dto;
 
     const genres = await this.genreRepo.findBy({ id: In(genreIds) });
-    const interests = interestIds?.length
-      ? await this.interestRepo.findBy({ id: In(interestIds) })
-      : [];
+    let interests: Interest[] = [];
+    if (interestIds?.length) {
+      interests = await this.interestRepo.findBy({ id: In(interestIds) });
+    } else if (interestNames?.length) {
+      interests = await this.interestsService.findOrCreateByNames(interestNames);
+    }
 
     const media = this.mediaRepo.create({
       ...rest,
@@ -147,6 +152,31 @@ export class MediaService {
     return this.findByStatusForUser(userId, WatchStatus.WATCHING);
   }
 
+  async getWatchStatusForUser(
+    userId: string,
+    mediaId: string,
+  ): Promise<WatchStatus> {
+    const entry = await this.watchStatusRepo.findOne({
+      where: { userId, mediaId },
+    });
+    return entry?.status ?? WatchStatus.NOT_WATCHED;
+  }
+
+  async setWatchStatusForUser(
+    userId: string,
+    mediaId: string,
+    status: WatchStatus,
+  ): Promise<void> {
+    await this.findOne(mediaId);
+
+    const entry =
+      (await this.watchStatusRepo.findOne({ where: { userId, mediaId } })) ??
+      this.watchStatusRepo.create({ userId, mediaId, status });
+    entry.status = status;
+
+    await this.watchStatusRepo.save(entry);
+  }
+
   async search(params: {
     query?: string;
     genre?: string;
@@ -178,3 +208,4 @@ export class MediaService {
     return { indexed };
   }
 }
+

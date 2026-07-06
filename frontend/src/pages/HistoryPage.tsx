@@ -5,6 +5,7 @@ import { getToken } from '../lib/auth-storage';
 import { getWatchHistory, type MediaItem } from '../api/media';
 import { useMediaSearch } from '../hooks/useMediaSearch';
 import { intersectByRelevance } from '../lib/media-filters';
+import { formatGenreLabel } from '../constants/interests';
 
 type Category = 'Newest' | 'Highest Rated';
 
@@ -33,7 +34,15 @@ export function HistoryPage() {
       return;
     }
     getWatchHistory(token)
-      .then((items) => setWatched(items))
+      .then((items) => {
+        const stillWatched = items.filter((item) => {
+          const localSavedState = localStorage.getItem(`watched_${item.id}`);
+          
+          return localSavedState !== 'false';
+        });
+        
+        setWatched(stillWatched);
+      })
       .catch((err) => {
         setError(err instanceof Error ? err.message : 'Unable to load your history.');
       })
@@ -171,13 +180,15 @@ export function HistoryPage() {
         <div className="media-grid">
           {filtered.map((item) => (
             <article className="media-card" key={item.id}>
-              <div className="media-poster">
-                {item.posterUrl ? (
-                  <img src={item.posterUrl} alt={item.name} />
-                ) : (
-                  <span className="poster-label">Picture</span>
-                )}
-              </div>
+              <Link to={`/media/${item.id}`} className="media-card-link" key={item.id}>
+                <div className="media-poster">
+                  {item.posterUrl ? (
+                    <img src={item.posterUrl} alt={item.name} />
+                  ) : (
+                    <span className="poster-label">Picture</span>
+                  )}
+                </div>
+              </Link>
 
               <div className="media-copy">
                 <div className="media-head">
@@ -193,7 +204,7 @@ export function HistoryPage() {
                 <div className="genre-row" aria-label="Genres">
                   {item.genres.map((genre) => (
                     <span className="genre-pill" key={genre.id}>
-                      {genre.name}
+                      {formatGenreLabel(genre.name)}
                     </span>
                   ))}
                 </div>

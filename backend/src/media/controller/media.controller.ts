@@ -16,6 +16,7 @@ import { CreateEpisodeDto } from '../dto/create-episode.dto';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
+import { UpdateWatchStatusDto } from '../dto/update-watch-status.dto';
 
 @Controller('media')
 export class MediaController {
@@ -66,6 +67,22 @@ export class MediaController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.mediaService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/status')
+  getWatchStatus(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.mediaService.getWatchStatusForUser(user.id, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id/status')
+  setWatchStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateWatchStatusDto,
+    @CurrentUser() user: User,
+  ) {
+    return this.mediaService.setWatchStatusForUser(user.id, id, dto.status);
   }
 
   @Post()
