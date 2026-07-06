@@ -5,6 +5,7 @@ import { getToken } from '../lib/auth-storage';
 import { getMe, type AuthUser } from '../api/auth';
 import { fetchMedia } from '../api/media';
 import { fetchGenres } from '../api/genres';
+import { useMediaSearch } from '../hooks/useMediaSearch';
 import { formatGenreLabel } from '../constants/interests';
 import type { Media } from '../types/media';
 import type { Genre } from '../types/genre';
@@ -41,49 +42,34 @@ export function HomePage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  // The search index stores genre/interest names, not ids, so the id picked
+  // in the dropdown has to be resolved to a name before it's sent to /media/search.
+  const selectedGenreName = useMemo(() => {
+    if (selectedGenreId === 'All') return undefined;
+    return genres.find((genre) => genre.id === selectedGenreId)?.name;
+  }, [selectedGenreId, genres]);
+
+  const { results: searchResults, searching } = useMediaSearch({
+    query,
+    genre: selectedGenreName,
+    interests: searchByInterests ? currentUser?.interests : undefined,
+  });
+
   const filteredMedia = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const baseList = searchResults ?? media;
 
-    return [...media]
-      .filter((item) => {
-        const genreNames = item.genres.map((g) => g.name).join(' ');
+    return [...baseList].sort((a, b) => {
+      const ratingA = a.rating ?? 0;
+      const ratingB = b.rating ?? 0;
+      const yearA = new Date(a.releaseDate).getFullYear();
+      const yearB = new Date(b.releaseDate).getFullYear();
 
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          [
-            item.name,
-            item.description,
-            genreNames,
-            String(new Date(item.releaseDate).getFullYear()),
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-        const matchesGenre =
-          selectedGenreId === 'All' ||
-          item.genres.some((g) => g.id === selectedGenreId);
-
-        const matchesInterest = searchByInterests
-          ? item.interests.some((interest) =>
-              (currentUser?.interests ?? []).includes(interest.name),
-            )
-          : true;
-
-        return matchesQuery && matchesGenre && matchesInterest;
-      })
-      .sort((a, b) => {
-        const ratingA = a.rating ?? 0;
-        const ratingB = b.rating ?? 0;
-        const yearA = new Date(a.releaseDate).getFullYear();
-        const yearB = new Date(b.releaseDate).getFullYear();
-
-        if (selectedCategory === 'Highest Rated') {
-          return ratingB - ratingA || yearB - yearA;
-        }
-        return yearB - yearA || ratingB - ratingA;
-      });
-  }, [media, query, searchByInterests, selectedCategory, selectedGenreId, currentUser]);
+      if (selectedCategory === 'Highest Rated') {
+        return ratingB - ratingA || yearB - yearA;
+      }
+      return yearB - yearA || ratingB - ratingA;
+    });
+  }, [media, searchResults, selectedCategory]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -118,6 +104,11 @@ export function HomePage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
+            {searching && (
+              <span className="search-status" aria-live="polite">
+                Searching…
+              </span>
+            )}
           </label>
 
           <aside className="filter-menu-shell" aria-label="Filter menu">

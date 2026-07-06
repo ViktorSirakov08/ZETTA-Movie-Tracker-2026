@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { MediaService } from '../service/media.service';
@@ -44,6 +45,36 @@ export class MediaController {
     return this.mediaService.findCurrentlyWatchingForUser(user.id);
   }
 
+  @Get('search')
+  search(
+    @Query('q') query?: string,
+    @Query('genre') genre?: string,
+    @Query('interests') interests?: string,
+  ) {
+    return this.mediaService.search({
+      query,
+      genre,
+      interests: interests ? interests.split(',').filter(Boolean) : undefined,
+    });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('reindex')
+  reindex() {
+    return this.mediaService.reindexAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.mediaService.findOne(id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/status')
+  getWatchStatus(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.mediaService.getWatchStatusForUser(user.id, id);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Patch(':id/status')
   setWatchStatus(
@@ -51,18 +82,7 @@ export class MediaController {
     @Body() dto: UpdateWatchStatusDto,
     @CurrentUser() user: User,
   ) {
-    return this.mediaService.setWatchStatus(user.id, id, dto.status);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id/status')
-  getWatchStatus(@Param('id') id: string, @CurrentUser() user: User) {
-    return this.mediaService.getWatchStatus(user.id, id);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.mediaService.findOne(id);
+    return this.mediaService.setWatchStatusForUser(user.id, id, dto.status);
   }
 
   @Post()

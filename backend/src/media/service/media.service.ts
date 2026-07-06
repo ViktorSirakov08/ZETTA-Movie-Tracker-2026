@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Media } from '../entity/media.entity';
@@ -12,10 +12,13 @@ import {
 import { CreateMediaDto } from '../dto/create-media.dto';
 import { UpdateMediaDto } from '../dto/update-media.dto';
 import { CreateEpisodeDto } from '../dto/create-episode.dto';
+import { MediaSearchService } from '../../search/media-search.service';
 import { InterestsService } from '../../interests/interests.service';
 
 @Injectable()
 export class MediaService {
+  private readonly logger = new Logger(MediaService.name);
+
   constructor(
     @InjectRepository(Genre) private genreRepo: Repository<Genre>,
     @InjectRepository(Interest) private interestRepo: Repository<Interest>,
@@ -26,7 +29,31 @@ export class MediaService {
     private episodeRepo: Repository<Episode>,
     @InjectRepository(MediaWatchStatus)
     private watchStatusRepo: Repository<MediaWatchStatus>,
+    private readonly mediaSearchService: MediaSearchService,
   ) {}
+
+  // Postgres is the source of truth — if Elasticsearch is briefly down,
+  // the write to Postgres should still succeed. Search just goes stale
+  // until the next successful sync, rather than blocking the request.
+  private async syncToSearchIndex(media: Media): Promise<void> {
+    try {
+      await this.mediaSearchService.indexMedia(media);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to index media ${media.id} in Elasticsearch: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  private async removeFromSearchIndex(id: string): Promise<void> {
+    try {
+      await this.mediaSearchService.removeMedia(id);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to remove media ${id} from Elasticsearch: ${(error as Error).message}`,
+      );
+    }
+  }
 
   findAll(): Promise<Media[]> {
     return this.mediaRepo.find();
@@ -62,7 +89,9 @@ export class MediaService {
       interests,
       rating: null, // always starts as "No Rating"
     });
-    return this.mediaRepo.save(media);
+    const saved = await this.mediaRepo.save(media);
+    await this.syncToSearchIndex(saved);
+    return saved;
   }
 
   async update(id: string, dto: UpdateMediaDto): Promise<Media> {
@@ -80,7 +109,9 @@ export class MediaService {
         : [];
     }
 
-    return this.mediaRepo.save(media);
+    const saved = await this.mediaRepo.save(media);
+    await this.syncToSearchIndex(saved);
+    return saved;
   }
 
   async remove(id: string): Promise<void> {
@@ -88,6 +119,7 @@ export class MediaService {
     if (result.affected === 0) {
       throw new NotFoundException(`Media with id ${id} not found`);
     }
+    await this.removeFromSearchIndex(id);
   }
 
   async addEpisode(mediaId: string, dto: CreateEpisodeDto): Promise<Episode> {
@@ -120,28 +152,7 @@ export class MediaService {
     return this.findByStatusForUser(userId, WatchStatus.WATCHING);
   }
 
-    async setWatchStatus(
-    userId: string,
-    mediaId: string,
-    status: WatchStatus,
-  ): Promise<MediaWatchStatus> {
-    // Confirms the media actually exists before recording progress against it.
-    await this.findOne(mediaId);
-
-    let entry = await this.watchStatusRepo.findOne({
-      where: { userId, mediaId },
-    });
-
-    if (entry) {
-      entry.status = status;
-    } else {
-      entry = this.watchStatusRepo.create({ userId, mediaId, status });
-    }
-
-    return this.watchStatusRepo.save(entry);
-  }
-
-  async getWatchStatus(
+  async getWatchStatusForUser(
     userId: string,
     mediaId: string,
   ): Promise<WatchStatus> {
@@ -149,6 +160,52 @@ export class MediaService {
       where: { userId, mediaId },
     });
     return entry?.status ?? WatchStatus.NOT_WATCHED;
+  }
+
+  async setWatchStatusForUser(
+    userId: string,
+    mediaId: string,
+    status: WatchStatus,
+  ): Promise<void> {
+    await this.findOne(mediaId);
+
+    const entry =
+      (await this.watchStatusRepo.findOne({ where: { userId, mediaId } })) ??
+      this.watchStatusRepo.create({ userId, mediaId, status });
+    entry.status = status;
+
+    await this.watchStatusRepo.save(entry);
+  }
+
+  async search(params: {
+    query?: string;
+    genre?: string;
+    interests?: string[];
+  }): Promise<Media[]> {
+    const hasFilters = Boolean(params.genre) || Boolean(params.interests?.length);
+    if (!params.query?.trim() && !hasFilters) {
+      return this.findAll();
+    }
+
+    const ids = await this.mediaSearchService.searchIds(params);
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const results = await this.mediaRepo.findBy({ id: In(ids) });
+    const byId = new Map(results.map((media) => [media.id, media]));
+
+    // Preserve Elasticsearch's relevance ranking — `IN (...)` doesn't
+    // guarantee row order, so re-sort to match the order `ids` came back in.
+    return ids
+      .map((id) => byId.get(id))
+      .filter((media): media is Media => Boolean(media));
+  }
+
+  async reindexAll(): Promise<{ indexed: number }> {
+    const allMedia = await this.mediaRepo.find();
+    const indexed = await this.mediaSearchService.reindexAll(allMedia);
+    return { indexed };
   }
 }
 

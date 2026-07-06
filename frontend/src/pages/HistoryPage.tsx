@@ -3,6 +3,8 @@ import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
 import { getWatchHistory, type MediaItem } from '../api/media';
+import { useMediaSearch } from '../hooks/useMediaSearch';
+import { intersectByRelevance } from '../lib/media-filters';
 import { formatGenreLabel } from '../constants/interests';
 
 type Category = 'Newest' | 'Highest Rated';
@@ -21,6 +23,11 @@ export function HistoryPage() {
     useState<Category>('Newest');
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const { results: searchResults, searching } = useMediaSearch({
+    query,
+    genre: selectedGenre === 'All' ? undefined : selectedGenre,
+  });
 
   useEffect(() => {
     if (!token) {
@@ -53,32 +60,19 @@ export function HistoryPage() {
   }, [watched]);
 
   const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const baseList = searchResults
+      ? intersectByRelevance(searchResults, watched)
+      : watched;
 
-    return [...watched]
-      .filter((item) => {
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          [item.name, item.description, item.genres.map((g) => g.name).join(' ')]
-            .join(' ')
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-        const matchesGenre =
-          selectedGenre === 'All' ||
-          item.genres.some((g) => g.name === selectedGenre);
-
-        return matchesQuery && matchesGenre;
-      })
-      .sort((a, b) => {
-        if (selectedCategory === 'Highest Rated') {
-          return (b.rating ?? 0) - (a.rating ?? 0);
-        }
-        return (
-          new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
-        );
-      });
-  }, [watched, query, selectedGenre, selectedCategory]);
+    return [...baseList].sort((a, b) => {
+      if (selectedCategory === 'Highest Rated') {
+        return (b.rating ?? 0) - (a.rating ?? 0);
+      }
+      return (
+        new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+      );
+    });
+  }, [watched, searchResults, selectedCategory]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -103,6 +97,11 @@ export function HistoryPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
+            {searching && (
+              <span className="search-status" aria-live="polite">
+                Searching…
+              </span>
+            )}
           </label>
 
           <aside className="filter-menu-shell" aria-label="Filter menu">
@@ -181,13 +180,15 @@ export function HistoryPage() {
         <div className="media-grid">
           {filtered.map((item) => (
             <article className="media-card" key={item.id}>
-              <div className="media-poster">
-                {item.posterUrl ? (
-                  <img src={item.posterUrl} alt={item.name} />
-                ) : (
-                  <span className="poster-label">Picture</span>
-                )}
-              </div>
+              <Link to={`/media/${item.id}`} className="media-card-link" key={item.id}>
+                <div className="media-poster">
+                  {item.posterUrl ? (
+                    <img src={item.posterUrl} alt={item.name} />
+                  ) : (
+                    <span className="poster-label">Picture</span>
+                  )}
+                </div>
+              </Link>
 
               <div className="media-copy">
                 <div className="media-head">
