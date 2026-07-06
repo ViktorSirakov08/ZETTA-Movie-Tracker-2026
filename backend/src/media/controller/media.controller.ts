@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { MediaService } from '../service/media.service';
@@ -41,6 +42,17 @@ export class MediaController {
   @Get('watching')
   findCurrentlyWatching(@CurrentUser() user: User) {
     return this.mediaService.findCurrentlyWatchingForUser(user.id);
+  }
+
+  @Get('search')
+  search(@Query('q') query: string) {
+    return this.mediaService.search(query ?? '');
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('reindex')
+  reindex() {
+    return this.mediaService.reindexAll();
   }
 
   @Get(':id')

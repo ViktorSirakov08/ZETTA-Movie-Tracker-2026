@@ -4,6 +4,8 @@ import './HomePage.css';
 import './WatchlistPage.css';
 import { getToken } from '../lib/auth-storage';
 import { getCurrentlyWatching, getWatchlist } from '../api/media';
+import { useMediaSearch } from '../hooks/useMediaSearch';
+import { intersectByRelevance } from '../lib/media-filters';
 import type { Media } from '../types/media';
 
 type Category = 'Newest' | 'Highest Rated';
@@ -12,26 +14,17 @@ const categories: Category[] = ['Newest', 'Highest Rated'];
 
 function filterAndSort(
   items: Media[],
-  normalizedQuery: string,
+  searchResults: Media[] | null,
   selectedGenre: string,
   selectedCategory: Category,
 ): Media[] {
-  return [...items]
-    .filter((item) => {
-      const genreNames = item.genres.map((g) => g.name).join(' ');
+  const baseList = searchResults ? intersectByRelevance(searchResults, items) : items;
 
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        [item.name, item.description, genreNames]
-          .join(' ')
-          .toLowerCase()
-          .includes(normalizedQuery);
-
-      const matchesGenre =
-        selectedGenre === 'All' || item.genres.some((g) => g.name === selectedGenre);
-
-      return matchesQuery && matchesGenre;
-    })
+  return [...baseList]
+    .filter(
+      (item) =>
+        selectedGenre === 'All' || item.genres.some((g) => g.name === selectedGenre),
+    )
     .sort((a, b) => {
       if (selectedCategory === 'Highest Rated') {
         return (b.rating ?? 0) - (a.rating ?? 0);
@@ -91,6 +84,7 @@ export function WatchlistPage() {
   const [loading, setLoading] = useState(true);
 
   const [query, setQuery] = useState('');
+  const { results: searchResults, searching } = useMediaSearch(query);
   const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -120,15 +114,14 @@ export function WatchlistPage() {
     return ['All', ...Array.from(names).sort((a, b) => a.localeCompare(b))];
   }, [watchlist, currentlyWatching]);
 
-  const normalizedQuery = query.trim().toLowerCase();
   const filteredWatchlist = useMemo(
-    () => filterAndSort(watchlist, normalizedQuery, selectedGenre, selectedCategory),
-    [watchlist, normalizedQuery, selectedGenre, selectedCategory],
+    () => filterAndSort(watchlist, searchResults, selectedGenre, selectedCategory),
+    [watchlist, searchResults, selectedGenre, selectedCategory],
   );
   const filteredCurrentlyWatching = useMemo(
     () =>
-      filterAndSort(currentlyWatching, normalizedQuery, selectedGenre, selectedCategory),
-    [currentlyWatching, normalizedQuery, selectedGenre, selectedCategory],
+      filterAndSort(currentlyWatching, searchResults, selectedGenre, selectedCategory),
+    [currentlyWatching, searchResults, selectedGenre, selectedCategory],
   );
 
   if (!token) {
@@ -154,6 +147,11 @@ export function WatchlistPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
+            {searching && (
+              <span className="search-status" aria-live="polite">
+                Searching…
+              </span>
+            )}
           </label>
 
           <aside className="filter-menu-shell" aria-label="Filter menu">

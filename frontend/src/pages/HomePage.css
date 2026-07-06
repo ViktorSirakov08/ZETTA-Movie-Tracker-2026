@@ -134,6 +134,14 @@
   font-size: 1.1rem;
 }
 
+.search-status {
+  flex-shrink: 0;
+  color: var(--sage-dark);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .filter-menu-shell {
   position: relative;
   min-height: 44px;

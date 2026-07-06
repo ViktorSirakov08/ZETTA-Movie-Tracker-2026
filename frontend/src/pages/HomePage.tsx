@@ -5,6 +5,7 @@ import { getToken } from '../lib/auth-storage';
 import { getMe, type AuthUser } from '../api/auth';
 import { fetchMedia } from '../api/media';
 import { fetchGenres } from '../api/genres';
+import { useMediaSearch } from '../hooks/useMediaSearch';
 import type { Media } from '../types/media';
 import type { Genre } from '../types/genre';
 
@@ -22,6 +23,7 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState('');
+  const { results: searchResults, searching } = useMediaSearch(query);
   const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
   const [selectedGenreId, setSelectedGenreId] = useState<string>('All');
   const [searchByInterests, setSearchByInterests] = useState(false);
@@ -41,24 +43,10 @@ export function HomePage() {
   }, [token]);
 
   const filteredMedia = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const baseList = searchResults ?? media;
 
-    return [...media]
+    return [...baseList]
       .filter((item) => {
-        const genreNames = item.genres.map((g) => g.name).join(' ');
-
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          [
-            item.name,
-            item.description,
-            genreNames,
-            String(new Date(item.releaseDate).getFullYear()),
-          ]
-            .join(' ')
-            .toLowerCase()
-            .includes(normalizedQuery);
-
         const matchesGenre =
           selectedGenreId === 'All' ||
           item.genres.some((g) => g.id === selectedGenreId);
@@ -69,7 +57,7 @@ export function HomePage() {
             )
           : true;
 
-        return matchesQuery && matchesGenre && matchesInterest;
+        return matchesGenre && matchesInterest;
       })
       .sort((a, b) => {
         const ratingA = a.rating ?? 0;
@@ -82,7 +70,7 @@ export function HomePage() {
         }
         return yearB - yearA || ratingB - ratingA;
       });
-  }, [media, query, searchByInterests, selectedCategory, selectedGenreId, currentUser]);
+  }, [media, searchResults, searchByInterests, selectedCategory, selectedGenreId, currentUser]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -117,6 +105,11 @@ export function HomePage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
+            {searching && (
+              <span className="search-status" aria-live="polite">
+                Searching…
+              </span>
+            )}
           </label>
 
           <aside className="filter-menu-shell" aria-label="Filter menu">

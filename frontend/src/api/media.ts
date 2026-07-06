@@ -12,6 +12,16 @@ export async function fetchMedia(): Promise<Media[]> {
   return res.json();
 }
 
+export async function searchMedia(query: string): Promise<Media[]> {
+  const res = await fetch(
+    `${API_BASE_URL}/media/search?q=${encodeURIComponent(query)}`,
+  );
+  if (!res.ok) {
+    throw new Error(`Failed to search media: ${res.status}`);
+  }
+  return res.json();
+}
+
 async function fetchMediaListWithAuth(
   path: string,
   token: string,

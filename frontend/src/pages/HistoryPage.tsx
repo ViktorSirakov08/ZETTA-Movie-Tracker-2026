@@ -3,6 +3,8 @@ import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
 import { getWatchHistory, type MediaItem } from '../api/media';
+import { useMediaSearch } from '../hooks/useMediaSearch';
+import { intersectByRelevance } from '../lib/media-filters';
 
 type Category = 'Newest' | 'Highest Rated';
 
@@ -16,6 +18,7 @@ export function HistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const [query, setQuery] = useState('');
+  const { results: searchResults, searching } = useMediaSearch(query);
   const [selectedCategory, setSelectedCategory] =
     useState<Category>('Newest');
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
@@ -44,23 +47,16 @@ export function HistoryPage() {
   }, [watched]);
 
   const filtered = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const baseList = searchResults
+      ? intersectByRelevance(searchResults, watched)
+      : watched;
 
-    return [...watched]
-      .filter((item) => {
-        const matchesQuery =
-          normalizedQuery.length === 0 ||
-          [item.name, item.description, item.genres.map((g) => g.name).join(' ')]
-            .join(' ')
-            .toLowerCase()
-            .includes(normalizedQuery);
-
-        const matchesGenre =
+    return [...baseList]
+      .filter(
+        (item) =>
           selectedGenre === 'All' ||
-          item.genres.some((g) => g.name === selectedGenre);
-
-        return matchesQuery && matchesGenre;
-      })
+          item.genres.some((g) => g.name === selectedGenre),
+      )
       .sort((a, b) => {
         if (selectedCategory === 'Highest Rated') {
           return (b.rating ?? 0) - (a.rating ?? 0);
@@ -69,7 +65,7 @@ export function HistoryPage() {
           new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
         );
       });
-  }, [watched, query, selectedGenre, selectedCategory]);
+  }, [watched, searchResults, selectedGenre, selectedCategory]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -94,6 +90,11 @@ export function HistoryPage() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
+            {searching && (
+              <span className="search-status" aria-live="polite">
+                Searching…
+              </span>
+            )}
           </label>
 
           <aside className="filter-menu-shell" aria-label="Filter menu">
