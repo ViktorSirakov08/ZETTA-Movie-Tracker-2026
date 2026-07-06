@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Media } from '../entity/media.entity';
@@ -14,6 +19,7 @@ import { UpdateMediaDto } from '../dto/update-media.dto';
 import { CreateEpisodeDto } from '../dto/create-episode.dto';
 import { MediaSearchService } from '../../search/media-search.service';
 import { InterestsService } from '../../interests/interests.service';
+import { calculateAge, minimumAgeFor } from '../../common/age';
 
 @Injectable()
 export class MediaService {
@@ -166,8 +172,20 @@ export class MediaService {
     userId: string,
     mediaId: string,
     status: WatchStatus,
+    userDateOfBirth: string,
   ): Promise<void> {
-    await this.findOne(mediaId);
+    const media = await this.findOne(mediaId);
+
+    // Playing (WATCHING) is the only action gated by age — a user can still
+    // add a restricted title to their watchlist or mark it watched manually.
+    if (status === WatchStatus.WATCHING) {
+      const requiredAge = minimumAgeFor(media.ageRestriction);
+      if (calculateAge(userDateOfBirth) < requiredAge) {
+        throw new ForbiddenException(
+          `This title requires viewers to be at least ${requiredAge} years old.`,
+        );
+      }
+    }
 
     const entry =
       (await this.watchStatusRepo.findOne({ where: { userId, mediaId } })) ??

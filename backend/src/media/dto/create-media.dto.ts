@@ -2,7 +2,6 @@ import {
   IsEnum,
   IsString,
   IsDateString,
-  IsBoolean,
   IsOptional,
   IsInt,
   Min,
@@ -11,8 +10,9 @@ import {
   IsIn,
 } from 'class-validator';
 
-import { MediaType } from '../entity/media.entity';
+import { AgeRestriction, MediaType } from '../entity/media.entity';
 import { INTEREST_NAMES } from '../../common/constants/interest-names';
+import { IsNotFutureDate } from '../../common/validators/is-not-future-date.validator';
 
 export class CreateMediaDto {
   @IsEnum(MediaType)
@@ -22,6 +22,7 @@ export class CreateMediaDto {
   name!: string;
 
   @IsDateString()
+  @IsNotFutureDate()
   releaseDate!: string;
 
   @IsString()
@@ -41,18 +42,15 @@ export class CreateMediaDto {
   @IsIn(INTEREST_NAMES, { each: true })
   interestNames?: string[];
 
-  @IsBoolean()
-  ageRestricted!: boolean;
+  @IsEnum(AgeRestriction)
+  ageRestriction!: AgeRestriction;
 
   @IsOptional()
   @IsInt()
-  @Min(0)
+  @Min(1)
   durationMinutes?: number;
 
   @IsOptional()
   @IsString()
   posterUrl?: string;
-
-  // Deliberately no `rating` field here — it's set to null on creation
-  // ("No Rating") and only ever changes via user ratings, never on create.
 }

@@ -139,7 +139,7 @@
 .action-button {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 20px;
   padding: 0.7rem 1.3rem;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(79, 93, 64, 0.16);
@@ -232,4 +232,76 @@
   .detail-poster {
     min-height: 320px;
   }
+}
+
+.edit-media-panel {
+  margin-top: 24px;
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  background: rgba(241, 242, 235, 0.6);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: inset var(--shadow);
+}
+
+.edit-media-panel h3 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  color: var(--text);
+}
+
+.action-button--danger {
+  background: #e63946;
+  color: #fff;
+  border-color: #e63946;
+}
+
+.action-button--danger:hover {
+  background: #cc2a36;
+  opacity: 1;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%; /* Ensures container stays flush */
+}
+
+/* Explicit layout properties keep input and textarea identically aligned */
+.field input,
+.field textarea {
+  display: block;
+  width: 100%;
+  margin: 0; /* Clears any hidden browser/global indentation defaults */
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box; /* Enforces padding stays inside width boundaries */
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--sage-dark);
+}
+
+/* Flexbox container stretches across full form block width */
+.form-panel-buttons {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+/* Explicitly targets the delete action to break right alignment */
+.form-panel-buttons .action-button--danger {
+  margin-left: auto; /* Automatically forces the button to the bottom-right corner */
 }

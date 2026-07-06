@@ -44,7 +44,7 @@ export class MediaSearchService implements OnModuleInit {
           releaseDate: { type: 'date' },
           rating: { type: 'float' },
           type: { type: 'keyword' },
-          ageRestricted: { type: 'boolean' },
+          ageRestriction: { type: 'keyword' },
         },
       },
     });
