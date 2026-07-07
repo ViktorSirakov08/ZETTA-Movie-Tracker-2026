@@ -5,10 +5,6 @@ export class CreateEpisodeDto {
   @Min(1)
   seasonNum!: number;
 
-  @IsInt()
-  @Min(1)
-  episodeNum!: number;
-
   @IsString()
   title!: string;
 }
