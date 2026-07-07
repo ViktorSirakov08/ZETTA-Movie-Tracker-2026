@@ -46,6 +46,7 @@ export function MediaDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewerDateOfBirth, setViewerDateOfBirth] = useState<string | null>(null);
   const [playError, setPlayError] = useState<string | null>(null);
+  const [playSuccessMessage, setPlaySuccessMessage] = useState<string | null>(null);
   const [watchlistNotice, setWatchlistNotice] = useState<string | null>(null);
 
   const [seasons, setSeasons] = useState<Season[]>([]);
@@ -178,9 +179,16 @@ export function MediaDetailPage() {
         return;
       }
       setPlayError(null);
-      updateStatus('WATCHING').catch((err) => {
-        setPlayError(err instanceof Error ? err.message : 'Unable to play this title.');
-      });
+      updateStatus('WATCHING')
+        .then(() => {
+          setPlaySuccessMessage(
+            `▶ Now playing "${media?.name}" — added to your Currently Watching list.`,
+          );
+          setTimeout(() => setPlaySuccessMessage(null), 3500);
+        })
+        .catch((err) => {
+          setPlayError(err instanceof Error ? err.message : 'Unable to play this title.');
+        });
   }
 
   function handleAddToWatchlist() {
@@ -611,6 +619,12 @@ export function MediaDetailPage() {
               </div>
             </form>
           )}
+          {playSuccessMessage && (
+            <p className="detail-play-success-notice" role="status">
+              {playSuccessMessage}
+            </p>
+          )}
+
           {playError && (
             <p className="detail-age-restriction-notice">{playError}</p>)}
 
