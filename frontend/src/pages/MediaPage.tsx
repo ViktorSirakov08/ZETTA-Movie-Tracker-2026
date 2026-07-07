@@ -5,7 +5,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media } from '../types/media';
 import { rateMedia, getUserRating } from '../api/ratings';
-import { updateMedia, deleteMedia } from '../api/media';
+import { updateMedia, deleteMedia, addEpisode } from '../api/media';
 import { fetchGenres } from '../api/genres';
 import type { Genre } from '../types/genre';
 import { getMe, type AuthUser } from '../api/auth';
@@ -38,6 +38,14 @@ export function MediaDetailPage() {
   const [viewerDateOfBirth, setViewerDateOfBirth] = useState<string | null>(null);
   const [playError, setPlayError] = useState<string | null>(null);
   const [watchlistNotice, setWatchlistNotice] = useState<string | null>(null);
+
+  // Admin "add episode" panel state
+  const [isAddingEpisodeOpen, setIsAddingEpisodeOpen] = useState(false);
+  const [newSeasonNum, setNewSeasonNum] = useState('1');
+  const [newEpisodeNum, setNewEpisodeNum] = useState('1');
+  const [newEpisodeTitle, setNewEpisodeTitle] = useState('');
+  const [isAddingEpisode, setIsAddingEpisode] = useState(false);
+  const [addEpisodeError, setAddEpisodeError] = useState<string | null>(null);
 
   const [isWatchlistAdded, setIsWatchlistAdded] = useState(() => {
     const saved = localStorage.getItem(`watchlist_${id}`);
@@ -185,6 +193,43 @@ export function MediaDetailPage() {
     }
     }
 
+  async function handleAddEpisode(e: React.FormEvent) {
+    e.preventDefault();
+    const token = getToken();
+    if (!token || !id) return;
+
+    const seasonNum = Number(newSeasonNum);
+    const episodeNum = Number(newEpisodeNum);
+    const title = newEpisodeTitle.trim();
+
+    if (
+      !title ||
+      !Number.isInteger(seasonNum) ||
+      seasonNum < 1 ||
+      !Number.isInteger(episodeNum) ||
+      episodeNum < 1
+    ) {
+      setAddEpisodeError('Enter a valid season, episode number, and title.');
+      return;
+    }
+
+    setIsAddingEpisode(true);
+    setAddEpisodeError(null);
+    try {
+      await addEpisode(token, id, { seasonNum, episodeNum, title });
+      const updated = await fetchMediaById(id);
+      setMedia(updated);
+      setNewEpisodeNum(String(episodeNum + 1));
+      setNewEpisodeTitle('');
+    } catch (err) {
+      setAddEpisodeError(
+        err instanceof Error ? err.message : 'Unable to add episode.',
+      );
+    } finally {
+      setIsAddingEpisode(false);
+    }
+  }
+
   if (loading) return <div className="detail-status">Loading...</div>;
   if (error) return <div className="detail-status">Something went wrong: {error}</div>;
   if (!media) return <div className="detail-status">Media not found.</div>;
@@ -266,15 +311,85 @@ export function MediaDetailPage() {
               {isWatchedMarked ? '✓ Marked' : '+ Mark as Watched'}
             </button>
             {currentUser?.role === 'admin' && (
-              <button 
-                type="button" 
-                className="action-button action-button--primary" 
+              <button
+                type="button"
+                className="action-button action-button--primary"
                 onClick={() => setIsEditing((prev) => !prev)}
               >
                 ✎ Edit Media
               </button>
             )}
+            {currentUser?.role === 'admin' && media.type === 'SERIES' && (
+              <button
+                type="button"
+                className="action-button action-button--primary"
+                onClick={() => setIsAddingEpisodeOpen((prev) => !prev)}
+              >
+                + Add Episode
+              </button>
+            )}
           </div>
+
+          {isAddingEpisodeOpen && (
+            <form className="edit-media-panel" onSubmit={handleAddEpisode}>
+              <h3>Add Episode</h3>
+              <div className="field-row">
+                <div className="field">
+                  <label htmlFor="new-episode-season">Season</label>
+                  <input
+                    id="new-episode-season"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={newSeasonNum}
+                    onChange={(e) => setNewSeasonNum(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="new-episode-num">Episode</label>
+                  <input
+                    id="new-episode-num"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={newEpisodeNum}
+                    onChange={(e) => setNewEpisodeNum(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="field">
+                <label htmlFor="new-episode-title">Title</label>
+                <input
+                  id="new-episode-title"
+                  type="text"
+                  value={newEpisodeTitle}
+                  onChange={(e) => setNewEpisodeTitle(e.target.value)}
+                  required
+                />
+              </div>
+              {addEpisodeError && (
+                <p className="detail-age-restriction-notice">{addEpisodeError}</p>
+              )}
+              <div className="form-panel-buttons">
+                <button
+                  type="submit"
+                  className="action-button action-button--primary"
+                  disabled={isAddingEpisode}
+                >
+                  {isAddingEpisode ? 'Adding...' : 'Add Episode'}
+                </button>
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => setIsAddingEpisodeOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
 
           {isEditing && (
             <form className="edit-media-panel" onSubmit={handleSaveChanges}>
