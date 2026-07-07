@@ -1,6 +1,61 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateMediaDto } from './create-media.dto';
+import {
+  IsEnum,
+  IsString,
+  IsDateString,
+  IsOptional,
+  IsInt,
+  Min,
+  IsUUID,
+  IsArray,
+  IsIn,
+} from 'class-validator';
+import { AgeRestriction, MediaType } from '../entity/media.entity';
+import { INTEREST_NAMES } from '../../common/constants/interest-names';
+import { IsNotFutureDate } from '../../common/validators/is-not-future-date.validator';
 
-// PartialType makes every field from CreateMediaDto optional —
-// perfect for PATCH /media/:id where you only send changed fields.
-export class UpdateMediaDto extends PartialType(CreateMediaDto) {}
+export class UpdateMediaDto {
+  @IsOptional()
+  @IsEnum(MediaType)
+  type?: MediaType;
+
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsDateString()
+  @IsNotFutureDate()
+  releaseDate?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  genreIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  interestIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(INTEREST_NAMES, { each: true })
+  interestNames?: string[];
+
+  @IsOptional()
+  @IsEnum(AgeRestriction)
+  ageRestriction?: AgeRestriction;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  durationMinutes?: number;
+
+  @IsOptional()
+  @IsString()
+  posterUrl?: string;
+}
