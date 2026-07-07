@@ -68,16 +68,6 @@ export function MediaDetailPage() {
   const [isAddingEpisode, setIsAddingEpisode] = useState(false);
   const [addEpisodeError, setAddEpisodeError] = useState<string | null>(null);
 
-  const [isWatchlistAdded, setIsWatchlistAdded] = useState(() => {
-    const saved = localStorage.getItem(`watchlist_${id}`);
-    return saved === 'true';
-  });
-
-  const [isWatchedMarked, setIsWatchedMarked] = useState(() => {
-    const saved = localStorage.getItem(`watched_${id}`);
-    return saved === 'true';
-  });
-
   useEffect(() => {
     if (!id) return;
     const token = getToken();
@@ -194,13 +184,9 @@ export function MediaDetailPage() {
   }
 
   function handleAddToWatchlist() {
-    const nextState = !isWatchlistAdded;
-    setIsWatchlistAdded(nextState);
-    localStorage.setItem(`watchlist_${id}`, String(nextState));
+    const nextState = watchStatus !== 'PLANNED_TO_WATCH';
 
     if (nextState) {
-        setIsWatchedMarked(false);
-        localStorage.removeItem(`watched_${id}`);
         updateStatus('PLANNED_TO_WATCH');
 
         if (!canWatch && media) {
@@ -210,18 +196,15 @@ export function MediaDetailPage() {
           );
         }
     } else {
+      updateStatus('NOT_WATCHED');
       setWatchlistNotice(null);
     }
   }
 
   function handleMarkAsWatched() {
-    const nextState = !isWatchedMarked;
-    setIsWatchedMarked(nextState);
-    localStorage.setItem(`watched_${id}`, String(nextState));
+    const nextState = watchStatus !== 'WATCHED';
 
     if (nextState) {
-        setIsWatchlistAdded(false);
-        localStorage.removeItem(`watchlist_${id}`);
         updateStatus('WATCHED');
     } else {
         updateStatus('NOT_WATCHED');
@@ -386,8 +369,17 @@ export function MediaDetailPage() {
             >
               ▶ Play
             </button>
-            <button className="action-button" onClick={handleAddToWatchlist}>
-              {isWatchlistAdded ? '✓ Added to Watchlist' : '+ Add to Watchlist'}
+            <button
+              className={
+                watchStatus === 'PLANNED_TO_WATCH'
+                  ? 'action-button action-button--primary'
+                  : 'action-button'
+              }
+              onClick={handleAddToWatchlist}
+            >
+              {watchStatus === 'PLANNED_TO_WATCH'
+                ? '✓ Added to Watchlist'
+                : '+ Add to Watchlist'}
             </button>
             <button
               className={

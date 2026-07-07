@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
 import { getMe, type AuthUser } from '../api/auth';
-import { fetchMedia } from '../api/media';
+import { fetchMedia, getWatchHistory, getCurrentlyWatching, getWatchlist } from '../api/media';
 import { fetchGenres } from '../api/genres';
 import { useMediaSearch } from '../hooks/useMediaSearch';
 import { formatGenreLabel } from '../constants/interests';
@@ -21,6 +21,7 @@ export function HomePage() {
   const [media, setMedia] = useState<Media[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [hiddenMediaIds, setHiddenMediaIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +42,19 @@ export function HomePage() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+
+    // Best-effort — if this fails, the home page just shows everything
+    // (including already-watched/in-progress/planned items) rather than
+    // breaking entirely. Home is meant to surface only NOT_WATCHED media.
+    Promise.all([getWatchHistory(token), getCurrentlyWatching(token), getWatchlist(token)])
+      .then(([watchedMedia, watchingMedia, plannedMedia]) => {
+        setHiddenMediaIds(
+          new Set(
+            [...watchedMedia, ...watchingMedia, ...plannedMedia].map((item) => item.id),
+          ),
+        );
+      })
+      .catch(() => {});
   }, [token]);
 
   // The search index stores genre/interest names, not ids, so the id picked
@@ -59,18 +73,20 @@ export function HomePage() {
   const filteredMedia = useMemo(() => {
     const baseList = searchResults ?? media;
 
-    return [...baseList].sort((a, b) => {
-      const ratingA = a.rating ?? 0;
-      const ratingB = b.rating ?? 0;
-      const yearA = new Date(a.releaseDate).getFullYear();
-      const yearB = new Date(b.releaseDate).getFullYear();
+    return baseList
+      .filter((item) => !hiddenMediaIds.has(item.id))
+      .sort((a, b) => {
+        const ratingA = a.rating ?? 0;
+        const ratingB = b.rating ?? 0;
+        const yearA = new Date(a.releaseDate).getFullYear();
+        const yearB = new Date(b.releaseDate).getFullYear();
 
-      if (selectedCategory === 'Highest Rated') {
-        return ratingB - ratingA || yearB - yearA;
-      }
-      return yearB - yearA || ratingB - ratingA;
-    });
-  }, [media, searchResults, selectedCategory]);
+        if (selectedCategory === 'Highest Rated') {
+          return ratingB - ratingA || yearB - yearA;
+        }
+        return yearB - yearA || ratingB - ratingA;
+      });
+  }, [media, searchResults, selectedCategory, hiddenMediaIds]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
