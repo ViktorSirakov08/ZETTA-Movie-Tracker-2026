@@ -13,8 +13,11 @@ import { RatingsModule } from './ratings/ratings.module';
 import { Rating } from './ratings/entities/rating.entity';
 import { Media } from './media/entity/media.entity';
 import { Episode } from './media/entity/episode.entity';
+import { Season } from './media/entity/season.entity';
 import { Genre } from './media/entity/genre.entity';
 import { MediaWatchStatus } from './media/entity/media-watch-status.entity';
+import { EpisodeWatchStatus } from './media/entity/episode-watch-status.entity';
+import { SeasonWatchStatus } from './media/entity/season-watch-status.entity';
 
 @Module({
   imports: [
@@ -38,8 +41,11 @@ import { MediaWatchStatus } from './media/entity/media-watch-status.entity';
           Rating,
           Media,
           Episode,
+          Season,
           Genre,
           MediaWatchStatus,
+          EpisodeWatchStatus,
+          SeasonWatchStatus,
         ],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',

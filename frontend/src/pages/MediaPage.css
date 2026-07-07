@@ -216,6 +216,28 @@
   color: var(--text);
 }
 
+.episode-watch-toggle {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sage-dark);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.episode-watch-toggle:hover {
+  background: rgba(79, 93, 64, 0.08);
+}
+
+.season-watched-badge {
+  color: var(--sage-dark);
+  font-weight: 600;
+}
+
 .detail-status {
   display: flex;
   align-items: center;
