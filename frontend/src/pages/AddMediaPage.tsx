@@ -210,7 +210,8 @@ export function AddMediaPage() {
       return;
     }
 
-    if (isFutureDate(releaseDate)) {
+    if (isFutureDate(releaseDate)) 
+   {
       setError('Release date cannot be in the future.');
       return;
     }
