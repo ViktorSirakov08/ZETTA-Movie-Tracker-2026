@@ -15,9 +15,6 @@ export function PasswordInput({ label, id, ...rest }: PasswordInputProps) {
     <div className="field">
       <label htmlFor={inputId}>{label}</label>
       <div className="field-input-wrap">
-        <span className="field-icon" aria-hidden="true">
-          🔒
-        </span>
         <input id={inputId} type={visible ? 'text' : 'password'} {...rest} />
         <button
           type="button"

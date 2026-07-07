@@ -45,9 +45,6 @@ export function LoginPage() {
         <div className="field">
           <label htmlFor="username">Username</label>
           <div className="field-input-wrap">
-            <span className="field-icon" aria-hidden="true">
-              👤
-            </span>
             <input
               id="username"
               type="text"
