@@ -9,8 +9,14 @@ import { formatGenreLabel } from '../constants/interests';
 import { formatReleaseDate } from '../lib/date';
 
 type Category = 'Newest' | 'Highest Rated';
+type TypeFilter = 'All' | 'MOVIE' | 'SERIES';
 
 const categories: Category[] = ['Newest', 'Highest Rated'];
+const typeFilters: { value: TypeFilter; label: string }[] = [
+  { value: 'All', label: 'All' },
+  { value: 'MOVIE', label: 'Movies' },
+  { value: 'SERIES', label: 'Series' },
+];
 
 export function HistoryPage() {
   const token = getToken();
@@ -23,6 +29,7 @@ export function HistoryPage() {
   const [selectedCategory, setSelectedCategory] =
     useState<Category>('Newest');
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
+  const [selectedType, setSelectedType] = useState<TypeFilter>('All');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { results: searchResults, searching } = useMediaSearch({
@@ -65,15 +72,17 @@ export function HistoryPage() {
       ? intersectByRelevance(searchResults, watched)
       : watched;
 
-    return [...baseList].sort((a, b) => {
-      if (selectedCategory === 'Highest Rated') {
-        return (b.rating ?? 0) - (a.rating ?? 0);
-      }
-      return (
-        new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
-      );
-    });
-  }, [watched, searchResults, selectedCategory]);
+    return baseList
+      .filter((item) => selectedType === 'All' || item.type === selectedType)
+      .sort((a, b) => {
+        if (selectedCategory === 'Highest Rated') {
+          return (b.rating ?? 0) - (a.rating ?? 0);
+        }
+        return (
+          new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+        );
+      });
+  }, [watched, searchResults, selectedCategory, selectedType]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -144,6 +153,24 @@ export function HistoryPage() {
                       onClick={() => setSelectedCategory(category)}
                     >
                       {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filter-group">
+                <span className="filter-label">Type</span>
+                <div className="chip-row">
+                  {typeFilters.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      className={
+                        selectedType === type.value ? 'chip chip--active' : 'chip'
+                      }
+                      onClick={() => setSelectedType(type.value)}
+                    >
+                      {type.label}
                     </button>
                   ))}
                 </div>
