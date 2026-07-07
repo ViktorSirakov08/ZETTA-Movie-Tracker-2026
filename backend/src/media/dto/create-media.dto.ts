@@ -9,6 +9,7 @@ import {
   IsUUID,
   IsArray,
   IsIn,
+  IsNotEmpty,
 } from 'class-validator';
 
 import { MediaType } from '../entity/media.entity';
@@ -54,9 +55,9 @@ export class CreateMediaDto {
   @Min(1)
   durationMinutes?: number;
 
-  @IsOptional()
   @IsString()
-  posterUrl?: string;
+  @IsNotEmpty()
+  posterUrl!: string;
 
   // Deliberately no `rating` field here — it's set to null on creation
   // ("No Rating") and only ever changes via user ratings, never on create.

@@ -205,6 +205,11 @@ export function AddMediaPage() {
       return;
     }
 
+    if (!posterUrl.trim()) {
+      setError('Please upload or provide a poster image before adding media.');
+      return;
+    }
+
     if (isFutureDate(releaseDate)) {
       setError('Release date cannot be in the future.');
       return;
