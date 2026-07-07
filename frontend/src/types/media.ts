@@ -32,3 +32,9 @@ export interface Episode {
   episodeNum: number;
   title: string;
 }
+
+export interface Season {
+  id: string;
+  mediaId: string;
+  seasonNum: number;
+}

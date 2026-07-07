@@ -6,11 +6,7 @@ import '../components/forms.css';
 import './AddMediaPage.css';
 import { getMe } from '../api/auth';
 import { ensureGenreIds } from '../api/genres';
-import {
-  addEpisode,
-  createMedia,
-  type CreateEpisodePayload,
-} from '../api/media';
+import { addEpisode, addSeason, createMedia } from '../api/media';
 import {
   formatGenreLabel,
   GENRE_NAMES,
@@ -30,18 +26,23 @@ const AGE_RESTRICTION_OPTIONS: { value: AgeRestriction; label: string }[] = [
 
 interface EpisodeDraft {
   key: string;
-  seasonNum: string;
-  episodeNum: string;
   title: string;
 }
 
+interface SeasonDraft {
+  key: string;
+  episodes: EpisodeDraft[];
+}
+
 function createEpisodeDraft(): EpisodeDraft {
-  return {
-    key: crypto.randomUUID(),
-    seasonNum: '',
-    episodeNum: '',
-    title: '',
-  };
+  return { key: crypto.randomUUID(), title: '' };
+}
+
+// Season/episode numbers are never typed by hand — they're derived from
+// position here and re-derived server-side when submitted in order, so a
+// season or episode can never be created out of sequence.
+function createSeasonDraft(): SeasonDraft {
+  return { key: crypto.randomUUID(), episodes: [createEpisodeDraft()] };
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -86,9 +87,7 @@ export function AddMediaPage() {
   const [ageRestriction, setAgeRestriction] = useState<AgeRestriction>('none');
   const [posterUrl, setPosterUrl] = useState('');
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
-  const [episodes, setEpisodes] = useState<EpisodeDraft[]>([
-    createEpisodeDraft(),
-  ]);
+  const [seasons, setSeasons] = useState<SeasonDraft[]>([createSeasonDraft()]);
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -143,53 +142,59 @@ export function AddMediaPage() {
       });
   }
 
-  function updateEpisode(
-    key: string,
-    field: keyof Omit<EpisodeDraft, 'key'>,
-    value: string,
-  ) {
-    setEpisodes((prev) =>
-      prev.map((episode) =>
-        episode.key === key ? { ...episode, [field]: value } : episode,
+  function addSeasonDraft() {
+    setSeasons((prev) => [...prev, createSeasonDraft()]);
+  }
+
+  function removeSeasonDraft(seasonKey: string) {
+    setSeasons((prev) =>
+      prev.length === 1 ? prev : prev.filter((season) => season.key !== seasonKey),
+    );
+  }
+
+  function addEpisodeDraft(seasonKey: string) {
+    setSeasons((prev) =>
+      prev.map((season) =>
+        season.key === seasonKey
+          ? { ...season, episodes: [...season.episodes, createEpisodeDraft()] }
+          : season,
       ),
     );
   }
 
-  function addEpisodeRow() {
-    setEpisodes((prev) => [...prev, createEpisodeDraft()]);
-  }
-
-  function removeEpisodeRow(key: string) {
-    setEpisodes((prev) =>
-      prev.length === 1 ? prev : prev.filter((episode) => episode.key !== key),
+  function removeEpisodeDraft(seasonKey: string, episodeKey: string) {
+    setSeasons((prev) =>
+      prev.map((season) =>
+        season.key === seasonKey
+          ? {
+              ...season,
+              episodes:
+                season.episodes.length === 1
+                  ? season.episodes
+                  : season.episodes.filter((episode) => episode.key !== episodeKey),
+            }
+          : season,
+      ),
     );
   }
 
-  function parseEpisodeDrafts(): CreateEpisodePayload[] | null {
-    const parsed: CreateEpisodePayload[] = [];
+  function updateEpisodeTitle(seasonKey: string, episodeKey: string, title: string) {
+    setSeasons((prev) =>
+      prev.map((season) =>
+        season.key === seasonKey
+          ? {
+              ...season,
+              episodes: season.episodes.map((episode) =>
+                episode.key === episodeKey ? { ...episode, title } : episode,
+              ),
+            }
+          : season,
+      ),
+    );
+  }
 
-    for (const episode of episodes) {
-      const seasonNum = Number(episode.seasonNum);
-      const episodeNum = Number(episode.episodeNum);
-      const title = episode.title.trim();
-
-      if (!title) {
-        return null;
-      }
-
-      if (
-        !Number.isInteger(seasonNum) ||
-        seasonNum < 1 ||
-        !Number.isInteger(episodeNum) ||
-        episodeNum < 1
-      ) {
-        return null;
-      }
-
-      parsed.push({ seasonNum, episodeNum, title });
-    }
-
-    return parsed;
+  function seasonDraftsAreValid(): boolean {
+    return seasons.every((season) => season.episodes.every((ep) => ep.title.trim()));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -222,16 +227,15 @@ export function AddMediaPage() {
       return;
     }
 
-    let episodePayload: CreateEpisodePayload[] = [];
     if (mediaType === 'SERIES') {
-      const parsed = parseEpisodeDrafts();
-      if (!parsed || parsed.length === 0) {
-        setError(
-          'Add at least one episode with a valid season, number, and title.',
-        );
+      if (seasons.length === 0 || seasons.some((season) => season.episodes.length === 0)) {
+        setError('Add at least one season with at least one episode.');
         return;
       }
-      episodePayload = parsed;
+      if (!seasonDraftsAreValid()) {
+        setError('Every episode needs a title.');
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -253,8 +257,17 @@ export function AddMediaPage() {
       });
 
       if (mediaType === 'SERIES') {
-        for (const episode of episodePayload) {
-          await addEpisode(token, created.id, episode);
+        for (const seasonDraft of seasons) {
+          // addSeason creates the season's first episode itself (a season
+          // is never empty), so only the remaining drafts need addEpisode.
+          const [firstEpisode, ...restEpisodes] = seasonDraft.episodes;
+          const season = await addSeason(token, created.id, firstEpisode.title.trim());
+          for (const episodeDraft of restEpisodes) {
+            await addEpisode(token, created.id, {
+              seasonNum: season.seasonNum,
+              title: episodeDraft.title.trim(),
+            });
+          }
         }
       }
 
@@ -449,59 +462,60 @@ export function AddMediaPage() {
 
           {mediaType === 'SERIES' && (
             <div className="field">
-              <label>Episodes</label>
-              <div className="episode-list">
-                {episodes.map((episode) => (
-                  <div key={episode.key} className="episode-row">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      aria-label="Season number"
-                      placeholder="Season"
-                      value={episode.seasonNum}
-                      onChange={(e) =>
-                        updateEpisode(episode.key, 'seasonNum', e.target.value)
-                      }
-                      required
-                    />
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      aria-label="Episode number"
-                      placeholder="Episode"
-                      value={episode.episodeNum}
-                      onChange={(e) =>
-                        updateEpisode(episode.key, 'episodeNum', e.target.value)
-                      }
-                      required
-                    />
-                    <input
-                      type="text"
-                      aria-label="Episode title"
-                      placeholder="Episode title"
-                      value={episode.title}
-                      onChange={(e) =>
-                        updateEpisode(episode.key, 'title', e.target.value)
-                      }
-                      required
-                    />
+              <label>Seasons &amp; Episodes</label>
+              <p className="field-hint">
+                Season and episode numbers are assigned automatically in order —
+                just add seasons and episode titles.
+              </p>
+              {seasons.map((season, seasonIndex) => (
+                <div key={season.key} className="episode-list season-draft">
+                  <div className="season-draft-header">
+                    <strong>Season {seasonIndex + 1}</strong>
                     <button
                       type="button"
                       className="btn-icon"
-                      aria-label="Remove episode"
-                      onClick={() => removeEpisodeRow(episode.key)}
+                      aria-label="Remove season"
+                      onClick={() => removeSeasonDraft(season.key)}
                     >
                       ×
                     </button>
                   </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                className="btn-ghost"
-                onClick={addEpisodeRow}
-              >
-                + Add episode
+                  {season.episodes.map((episode, episodeIndex) => (
+                    <div key={episode.key} className="season-draft-episode-row">
+                      <span className="episode-number-preview">
+                        E{episodeIndex + 1}
+                      </span>
+                      <input
+                        type="text"
+                        aria-label="Episode title"
+                        placeholder="Episode title"
+                        value={episode.title}
+                        onChange={(e) =>
+                          updateEpisodeTitle(season.key, episode.key, e.target.value)
+                        }
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="btn-icon"
+                        aria-label="Remove episode"
+                        onClick={() => removeEpisodeDraft(season.key, episode.key)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    className="btn-ghost"
+                    onClick={() => addEpisodeDraft(season.key)}
+                  >
+                    + Add episode
+                  </button>
+                </div>
+              ))}
+              <button type="button" className="btn-ghost" onClick={addSeasonDraft}>
+                + Add season
               </button>
             </div>
           )}
