@@ -11,22 +11,31 @@ import { formatGenreLabel } from '../constants/interests';
 import { formatReleaseDate } from '../lib/date';
 
 type Category = 'Newest' | 'Highest Rated';
+type TypeFilter = 'All' | 'MOVIE' | 'SERIES';
 
 const categories: Category[] = ['Newest', 'Highest Rated'];
+const typeFilters: { value: TypeFilter; label: string }[] = [
+  { value: 'All', label: 'All' },
+  { value: 'MOVIE', label: 'Movies' },
+  { value: 'SERIES', label: 'Series' },
+];
 
 function filterAndSort(
   items: Media[],
   searchResults: Media[] | null,
   selectedCategory: Category,
+  selectedType: TypeFilter,
 ): Media[] {
   const baseList = searchResults ? intersectByRelevance(searchResults, items) : items;
 
-  return [...baseList].sort((a, b) => {
-    if (selectedCategory === 'Highest Rated') {
-      return (b.rating ?? 0) - (a.rating ?? 0);
-    }
-    return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime();
-  });
+  return baseList
+    .filter((item) => selectedType === 'All' || item.type === selectedType)
+    .sort((a, b) => {
+      if (selectedCategory === 'Highest Rated') {
+        return (b.rating ?? 0) - (a.rating ?? 0);
+      }
+      return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime();
+    });
 }
 
 function MediaRow({ items }: { items: Media[] }) {
@@ -83,6 +92,7 @@ export function WatchlistPage() {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
   const [selectedGenre, setSelectedGenre] = useState<string>('All');
+  const [selectedType, setSelectedType] = useState<TypeFilter>('All');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const { results: searchResults, searching } = useMediaSearch({
@@ -129,12 +139,12 @@ export function WatchlistPage() {
   }, [watchlist, currentlyWatching]);
 
   const filteredWatchlist = useMemo(
-    () => filterAndSort(watchlist, searchResults, selectedCategory),
-    [watchlist, searchResults, selectedCategory],
+    () => filterAndSort(watchlist, searchResults, selectedCategory, selectedType),
+    [watchlist, searchResults, selectedCategory, selectedType],
   );
   const filteredCurrentlyWatching = useMemo(
-    () => filterAndSort(currentlyWatching, searchResults, selectedCategory),
-    [currentlyWatching, searchResults, selectedCategory],
+    () => filterAndSort(currentlyWatching, searchResults, selectedCategory, selectedType),
+    [currentlyWatching, searchResults, selectedCategory, selectedType],
   );
 
   if (!token) {
@@ -204,6 +214,24 @@ export function WatchlistPage() {
                       onClick={() => setSelectedCategory(category)}
                     >
                       {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filter-group">
+                <span className="filter-label">Type</span>
+                <div className="chip-row">
+                  {typeFilters.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      className={
+                        selectedType === type.value ? 'chip chip--active' : 'chip'
+                      }
+                      onClick={() => setSelectedType(type.value)}
+                    >
+                      {type.label}
                     </button>
                   ))}
                 </div>

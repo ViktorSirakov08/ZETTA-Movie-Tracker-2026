@@ -12,8 +12,14 @@ import type { Media } from '../types/media';
 import type { Genre } from '../types/genre';
 
 type Category = 'Newest' | 'Highest Rated';
+type TypeFilter = 'All' | 'MOVIE' | 'SERIES';
 
 const categories: Category[] = ['Newest', 'Highest Rated'];
+const typeFilters: { value: TypeFilter; label: string }[] = [
+  { value: 'All', label: 'All' },
+  { value: 'MOVIE', label: 'Movies' },
+  { value: 'SERIES', label: 'Series' },
+];
 
 export function HomePage() {
   const token = getToken();
@@ -28,6 +34,7 @@ export function HomePage() {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
   const [selectedGenreId, setSelectedGenreId] = useState<string>('All');
+  const [selectedType, setSelectedType] = useState<TypeFilter>('All');
   const [searchByInterests, setSearchByInterests] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -75,6 +82,7 @@ export function HomePage() {
 
     return baseList
       .filter((item) => !hiddenMediaIds.has(item.id))
+      .filter((item) => selectedType === 'All' || item.type === selectedType)
       .sort((a, b) => {
         const ratingA = a.rating ?? 0;
         const ratingB = b.rating ?? 0;
@@ -86,7 +94,7 @@ export function HomePage() {
         }
         return yearB - yearA || ratingB - ratingA;
       });
-  }, [media, searchResults, selectedCategory, hiddenMediaIds]);
+  }, [media, searchResults, selectedCategory, selectedType, hiddenMediaIds]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -167,6 +175,24 @@ export function HomePage() {
                       onClick={() => setSelectedCategory(category)}
                     >
                       {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filter-group">
+                <span className="filter-label">Type</span>
+                <div className="chip-row">
+                  {typeFilters.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      className={
+                        selectedType === type.value ? 'chip chip--active' : 'chip'
+                      }
+                      onClick={() => setSelectedType(type.value)}
+                    >
+                      {type.label}
                     </button>
                   ))}
                 </div>
