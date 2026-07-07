@@ -28,6 +28,7 @@
 }
 
 .detail-poster {
+  position: relative;
   border-radius: var(--radius-xl);
   overflow: hidden;
   background: linear-gradient(135deg, rgba(216, 218, 211, 0.95), rgba(164, 194, 165, 0.45));
