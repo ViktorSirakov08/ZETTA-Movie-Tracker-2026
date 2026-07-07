@@ -7,6 +7,7 @@ import { fetchMedia } from '../api/media';
 import { fetchGenres } from '../api/genres';
 import { useMediaSearch } from '../hooks/useMediaSearch';
 import { formatGenreLabel } from '../constants/interests';
+import { formatReleaseDate } from '../lib/date';
 import type { Media } from '../types/media';
 import type { Genre } from '../types/genre';
 
@@ -220,7 +221,7 @@ export function HomePage() {
                   </span>
                 </div>
                 <p className="release-year">
-                  Released {new Date(item.releaseDate).getFullYear()}
+                  Released {formatReleaseDate(item.releaseDate)}
                 </p>
                 <p>{item.description}</p>
                 <div className="genre-row" aria-label="Genres">
