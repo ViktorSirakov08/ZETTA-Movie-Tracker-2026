@@ -8,6 +8,7 @@ import { useMediaSearch } from '../hooks/useMediaSearch';
 import { intersectByRelevance } from '../lib/media-filters';
 import type { Media } from '../types/media';
 import { formatGenreLabel } from '../constants/interests';
+import { formatReleaseDate } from '../lib/date';
 
 type Category = 'Newest' | 'Highest Rated';
 
@@ -54,7 +55,7 @@ function MediaRow({ items }: { items: Media[] }) {
               </span>
             </div>
             <p className="release-year">
-              Released {new Date(item.releaseDate).getFullYear()}
+              Released {formatReleaseDate(item.releaseDate)}
             </p>
             <p>{item.description}</p>
             <div className="genre-row" aria-label="Genres">

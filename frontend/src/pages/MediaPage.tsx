@@ -10,6 +10,7 @@ import { fetchGenres } from '../api/genres';
 import type { Genre } from '../types/genre';
 import { getMe, type AuthUser } from '../api/auth';
 import { calculateAge, minimumAgeFor } from '../lib/age';
+import { formatReleaseDate } from '../lib/date';
 import './MediaPage.css';
 
 export function MediaDetailPage() {
@@ -188,8 +189,6 @@ export function MediaDetailPage() {
   if (error) return <div className="detail-status">Something went wrong: {error}</div>;
   if (!media) return <div className="detail-status">Media not found.</div>;
 
-  const releaseYear = new Date(media.releaseDate).getFullYear();
-
   return (
     <main className="media-detail-page">
       <Link to="/home" className="back-link">
@@ -210,7 +209,7 @@ export function MediaDetailPage() {
             <div>
               <h1>{media.name}</h1>
               <p className="detail-meta">
-                {releaseYear} · {media.type === 'MOVIE' ? 'Movie' : 'Series'}
+                {formatReleaseDate(media.releaseDate)} · {media.type === 'MOVIE' ? 'Movie' : 'Series'}
                 {media.durationMinutes ? ` · ${media.durationMinutes}m` : ''}
                 {media.ageRestriction !== 'NONE' ? ` · ${media.ageRestriction === 'PG13' ? '13+' : '18+'}` : ''}
               </p>
