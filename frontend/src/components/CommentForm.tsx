@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import './CommentForm.css';
 import { getToken } from '../lib/auth-storage';
 import { postComment } from '../api/comments';
 
@@ -27,7 +28,12 @@ export function CommentForm({ mediaId, onPosted }: { mediaId: string; onPosted: 
       setContent('');
       onPosted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to post comment.');
+      const raw = err instanceof Error ? err.message : '';
+      const friendly =
+        raw.includes('Cannot POST') || raw.includes('Failed to fetch') || raw.includes('connect')
+          ? 'Unable to post comment right now.'
+          : raw || 'Failed to post comment.';
+      setError(friendly);
     } finally {
       setSubmitting(false);
     }
@@ -47,6 +53,7 @@ export function CommentForm({ mediaId, onPosted }: { mediaId: string; onPosted: 
     <form className="comment-form" onSubmit={handleSubmit}>
       {error && <div className="form-error-banner">{error}</div>}
       <textarea
+        className="comment-textarea"
         rows={3}
         placeholder="Add a public comment"
         value={content}

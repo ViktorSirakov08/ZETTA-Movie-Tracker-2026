@@ -15,7 +15,14 @@ export function CommentsList({ mediaId }: { mediaId: string }) {
       const data = await fetchComments(mediaId);
       setComments(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load comments.');
+      const raw = err instanceof Error ? err.message : '';
+      const friendly =
+        raw.includes('Cannot GET') ||
+        raw.includes('Failed to fetch') ||
+        raw.includes('connect')
+          ? 'Comments are temporarily unavailable.'
+          : raw || 'Failed to load comments.';
+      setError(friendly);
     } finally {
       setLoading(false);
     }
