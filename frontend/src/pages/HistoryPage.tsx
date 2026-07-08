@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import { getWatchHistory, type MediaItem } from '../api/media';
 import { useMediaSearch } from '../hooks/useMediaSearch';
 import { intersectByRelevance } from '../lib/media-filters';
@@ -41,14 +42,20 @@ export function HistoryPage() {
     if (!token) {
       return;
     }
-    getWatchHistory(token)
+    getValidAccessToken()
+      .then((validToken) => {
+        if (!validToken) {
+          throw new Error('Your session has expired. Please log in again.');
+        }
+        return getWatchHistory(validToken);
+      })
       .then((items) => {
         const stillWatched = items.filter((item) => {
           const localSavedState = localStorage.getItem(`watched_${item.id}`);
-          
+
           return localSavedState !== 'false';
         });
-        
+
         setWatched(stillWatched);
       })
       .catch((err) => {

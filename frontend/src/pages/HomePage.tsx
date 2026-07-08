@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import { getMe, type AuthUser } from '../api/auth';
 import { fetchMedia, getWatchHistory, getCurrentlyWatching, getWatchlist } from '../api/media';
 import { fetchGenres } from '../api/genres';
@@ -41,27 +42,39 @@ export function HomePage() {
   useEffect(() => {
     if (!token) return;
 
-    Promise.all([fetchMedia(), fetchGenres(), getMe(token)])
-      .then(([mediaData, genreData, user]) => {
-        setMedia(mediaData);
-        setGenres(genreData);
-        setCurrentUser(user);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    getValidAccessToken().then((validToken) => {
+      if (!validToken) {
+        setError('Your session has expired. Please log in again.');
+        setLoading(false);
+        return;
+      }
 
-    // Best-effort — if this fails, the home page just shows everything
-    // (including already-watched/in-progress/planned items) rather than
-    // breaking entirely. Home is meant to surface only NOT_WATCHED media.
-    Promise.all([getWatchHistory(token), getCurrentlyWatching(token), getWatchlist(token)])
-      .then(([watchedMedia, watchingMedia, plannedMedia]) => {
-        setHiddenMediaIds(
-          new Set(
-            [...watchedMedia, ...watchingMedia, ...plannedMedia].map((item) => item.id),
-          ),
-        );
-      })
-      .catch(() => {});
+      Promise.all([fetchMedia(), fetchGenres(), getMe(validToken)])
+        .then(([mediaData, genreData, user]) => {
+          setMedia(mediaData);
+          setGenres(genreData);
+          setCurrentUser(user);
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+
+      // Best-effort — if this fails, the home page just shows everything
+      // (including already-watched/in-progress/planned items) rather than
+      // breaking entirely. Home is meant to surface only NOT_WATCHED media.
+      Promise.all([
+        getWatchHistory(validToken),
+        getCurrentlyWatching(validToken),
+        getWatchlist(validToken),
+      ])
+        .then(([watchedMedia, watchingMedia, plannedMedia]) => {
+          setHiddenMediaIds(
+            new Set(
+              [...watchedMedia, ...watchingMedia, ...plannedMedia].map((item) => item.id),
+            ),
+          );
+        })
+        .catch(() => {});
+    });
   }, [token]);
 
   // The search index stores genre/interest names, not ids, so the id picked

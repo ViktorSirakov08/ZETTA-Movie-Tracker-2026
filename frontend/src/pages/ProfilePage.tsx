@@ -12,6 +12,7 @@ import {
   getToken,
   updateStoredUser,
 } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import { INTERESTS, INTEREST_LABELS } from '../constants/interests';
 
 export function ProfilePage() {
@@ -29,14 +30,20 @@ export function ProfilePage() {
     if (!token) {
       return;
     }
-    getMe(token)
+    getValidAccessToken()
+      .then((validToken) => {
+        if (!validToken) {
+          throw new Error('Your session has expired. Please log in again.');
+        }
+        return getMe(validToken);
+      })
       .then((fresh) => {
         setUser(fresh);
         setUsername(fresh.username);
         setSelectedInterests(new Set(fresh.interests));
       })
-      .catch(() => {
-        setError('Unable to load your profile.');
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Unable to load your profile.');
       });
   }, [token]);
 
@@ -77,7 +84,11 @@ export function ProfilePage() {
 
     setSubmitting(true);
     try {
-      const updated = await updateProfile(token as string, {
+      const validToken = await getValidAccessToken();
+      if (!validToken) {
+        throw new Error('Your session has expired. Please log in again.');
+      }
+      const updated = await updateProfile(validToken, {
         username,
         interests,
       });
