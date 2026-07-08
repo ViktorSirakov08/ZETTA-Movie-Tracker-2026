@@ -21,6 +21,9 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { UpdateWatchStatusDto } from '../dto/update-watch-status.dto';
 import { Role } from '../../common/enums/role.enum';
+import { UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { StorageService } from '../../storage/service/storage.service';
 
 function requireAdmin(user: User): void {
   if (user.role !== Role.ADMIN) {
@@ -30,7 +33,7 @@ function requireAdmin(user: User): void {
 
 @Controller('media')
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(private readonly mediaService: MediaService, private readonly storageService: StorageService) {}
 
   @Get()
   findAll() {
@@ -182,5 +185,19 @@ export class MediaController {
       episodeId,
       dto.watched,
     );
+  }
+  
+  @UseGuards(JwtAuthGuard)
+  @Post('poster-upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadPoster(@UploadedFile() file: Express.Multer.File) {
+    if (!file) {
+      throw new BadRequestException('No file provided.');
+    }
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('File must be an image.');
+    }
+    const url = await this.storageService.uploadPoster(file);
+    return { url };
   }
 }

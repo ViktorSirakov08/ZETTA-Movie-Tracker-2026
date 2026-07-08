@@ -147,6 +147,25 @@ export async function deleteMedia(token: string, id: string): Promise<void> {
   }
 }
 
+export async function uploadPoster(token: string, file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE_URL}/media/poster-upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` }, // no Content-Type — browser sets multipart boundary automatically
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to upload poster: ${res.status}`);
+  }
+
+  const { url } = await res.json();
+  return url;
+}
+
 export interface CreateEpisodePayload {
   seasonNum: number;
   title: string;

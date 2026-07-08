@@ -6,7 +6,7 @@ import '../components/forms.css';
 import './AddMediaPage.css';
 import { getMe } from '../api/auth';
 import { ensureGenreIds } from '../api/genres';
-import { addEpisode, addSeason, createMedia } from '../api/media';
+import { addEpisode, addSeason, createMedia, uploadPoster } from '../api/media';
 import {
   formatGenreLabel,
   GENRE_NAMES,
@@ -43,15 +43,6 @@ function createEpisodeDraft(): EpisodeDraft {
 // season or episode can never be created out of sequence.
 function createSeasonDraft(): SeasonDraft {
   return { key: crypto.randomUUID(), episodes: [createEpisodeDraft()] };
-}
-
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read poster file.'));
-    reader.readAsDataURL(file);
-  });
 }
 
 function readMultiSelectValues(event: ChangeEvent<HTMLSelectElement>): string[] {
@@ -118,11 +109,10 @@ export function AddMediaPage() {
     return null;
   }
 
-  function handlePosterFileChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handlePosterFileChange(event: ChangeEvent<HTMLInputElement>) {
+    console.log('handlePosterFileChange fired', event.target.files);
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file || !token) return;
 
     if (!file.type.startsWith('image/')) {
       setError('Poster must be an image file.');
@@ -133,13 +123,12 @@ export function AddMediaPage() {
     const previewUrl = URL.createObjectURL(file);
     setPosterPreview(previewUrl);
 
-    readFileAsDataUrl(file)
-      .then((dataUrl) => {
-        setPosterUrl(dataUrl);
-      })
-      .catch(() => {
-        setError('Failed to load poster image.');
-      });
+    try {
+      const uploadedUrl = await uploadPoster(token, file);
+      setPosterUrl(uploadedUrl);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload poster.');
+    }
   }
 
   function addSeasonDraft() {
