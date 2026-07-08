@@ -228,11 +228,6 @@ export function AddMediaPage() {
     }
 
     if (mediaType === 'SERIES') {
-      const parsed = parseEpisodeDrafts();
-      if (!parsed || parsed.length === 0) {
-        setError(
-          'Episode and season must be numbers',
-        );
       if (seasons.length === 0 || seasons.some((season) => season.episodes.length === 0)) {
         setError('Add at least one season with at least one episode.');
         return;
