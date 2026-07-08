@@ -1,4 +1,4 @@
-import type { AgeRestriction, Media } from '../types/media';
+import type { AgeRestriction, Media, Season } from '../types/media';
 import { API_BASE_URL } from './client';
 
 export type MediaItem = Media;
@@ -147,9 +147,27 @@ export async function deleteMedia(token: string, id: string): Promise<void> {
   }
 }
 
+export async function uploadPoster(token: string, file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch(`${API_BASE_URL}/media/poster-upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` }, // no Content-Type — browser sets multipart boundary automatically
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to upload poster: ${res.status}`);
+  }
+
+  const { url } = await res.json();
+  return url;
+}
+
 export interface CreateEpisodePayload {
   seasonNum: number;
-  episodeNum: number;
   title: string;
 }
 
@@ -169,6 +187,90 @@ export async function addEpisode(
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new Error(body?.message ?? `Failed to add episode: ${res.status}`);
+  }
+}
+
+export async function fetchSeasons(mediaId: string): Promise<Season[]> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/seasons`);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch seasons: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function addSeason(
+  token: string,
+  mediaId: string,
+  firstEpisodeTitle: string,
+): Promise<Season> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/seasons`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ title: firstEpisodeTitle }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to add season: ${res.status}`);
+  }
+  return res.json();
+}
+
+export interface EpisodeWatchStatusEntry {
+  episodeId: string;
+  watched: boolean;
+}
+
+export interface SeasonWatchStatusEntry {
+  seasonId: string;
+  seasonNum: number;
+  watched: boolean;
+}
+
+export async function getEpisodeWatchStatuses(
+  token: string,
+  mediaId: string,
+): Promise<EpisodeWatchStatusEntry[]> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/episode-status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch episode watch statuses: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function getSeasonWatchStatuses(
+  token: string,
+  mediaId: string,
+): Promise<SeasonWatchStatusEntry[]> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/season-status`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch season watch statuses: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function setEpisodeWatchStatus(
+  token: string,
+  episodeId: string,
+  watched: boolean,
+): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/media/episodes/${episodeId}/status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ watched }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to update episode status: ${res.status}`);
   }
 }
 
@@ -201,5 +303,6 @@ export async function getWatchStatus(
   if (!res.ok) {
     throw new Error(`Failed to fetch watch status: ${res.status}`);
   }
-  return res.json();
+  const data: { status: string } = await res.json();
+  return data.status;
 }

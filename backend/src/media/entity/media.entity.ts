@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 
 import { Episode } from './episode.entity';
+import { Season } from './season.entity';
 import { Genre } from './genre.entity';
 import { Interest } from '../../interests/entities/interest.entity';
 
@@ -71,6 +72,9 @@ export class Media {
 
   @OneToMany(() => Episode, (episode) => episode.media)
   episodes!: Episode[];
+
+  @OneToMany(() => Season, (season) => season.media)
+  seasons!: Season[];
 
   @CreateDateColumn()
   createdAt!: Date;

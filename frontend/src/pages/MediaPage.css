@@ -216,6 +216,50 @@
   color: var(--text);
 }
 
+.episode-watch-toggle {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--sage-dark);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.episode-watch-toggle:hover {
+  background: rgba(79, 93, 64, 0.08);
+}
+
+.season-watched-badge {
+  color: var(--sage-dark);
+  font-weight: 600;
+}
+
+.detail-play-success-notice {
+  margin: 12px 0 0;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(79, 93, 64, 0.1);
+  border: 1px solid rgba(79, 93, 64, 0.16);
+  color: var(--sage-dark);
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.detail-age-restriction-notice {
+  margin: 12px 0 0;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(200, 80, 60, 0.08);
+  border: 1px solid rgba(200, 80, 60, 0.2);
+  color: #a03d2a;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
 .detail-status {
   display: flex;
   align-items: center;

@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
-import { getToken } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import { setWatchStatus, getWatchStatus } from '../api/media';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
-import type { Media } from '../types/media';
+import type { Media, Season } from '../types/media';
 import { rateMedia, getUserRating } from '../api/ratings';
 import { updateMedia, deleteMedia, addEpisode } from '../api/media';
+import {
+  fetchSeasons,
+  addSeason,
+  getEpisodeWatchStatuses,
+  getSeasonWatchStatuses,
+  setEpisodeWatchStatus,
+  type EpisodeWatchStatusEntry,
+  type SeasonWatchStatusEntry,
+} from '../api/media';
 import { fetchGenres } from '../api/genres';
 import type { Genre } from '../types/genre';
 import { getMe, type AuthUser } from '../api/auth';
@@ -37,71 +46,107 @@ export function MediaDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewerDateOfBirth, setViewerDateOfBirth] = useState<string | null>(null);
   const [playError, setPlayError] = useState<string | null>(null);
+  const [playSuccessMessage, setPlaySuccessMessage] = useState<string | null>(null);
   const [watchlistNotice, setWatchlistNotice] = useState<string | null>(null);
 
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [episodeStatuses, setEpisodeStatuses] = useState<EpisodeWatchStatusEntry[]>([]);
+  const [seasonStatuses, setSeasonStatuses] = useState<SeasonWatchStatusEntry[]>([]);
+
+  // Admin "add season" panel state — a season is never created empty, so
+  // this doubles as the title for that season's first episode.
+  const [isAddingSeasonOpen, setIsAddingSeasonOpen] = useState(false);
+  const [newSeasonFirstEpisodeTitle, setNewSeasonFirstEpisodeTitle] = useState('');
+  const [isAddingSeason, setIsAddingSeason] = useState(false);
+  const [addSeasonError, setAddSeasonError] = useState<string | null>(null);
+
+  // Admin "add episode" panel state — season/episode numbers are always
+  // auto-assigned server-side, never typed, so an episode can't be created
+  // for a season that doesn't exist or skip a number within one.
   const [isAddingEpisodeOpen, setIsAddingEpisodeOpen] = useState(false);
-  const [newSeasonNum, setNewSeasonNum] = useState('1');
-  const [newEpisodeNum, setNewEpisodeNum] = useState('1');
+  const [selectedSeasonNum, setSelectedSeasonNum] = useState<number | null>(null);
   const [newEpisodeTitle, setNewEpisodeTitle] = useState('');
   const [isAddingEpisode, setIsAddingEpisode] = useState(false);
   const [addEpisodeError, setAddEpisodeError] = useState<string | null>(null);
 
-  const [isWatchlistAdded, setIsWatchlistAdded] = useState(() => {
-    const saved = localStorage.getItem(`watchlist_${id}`);
-    return saved === 'true';
-  });
-
-  const [isWatchedMarked, setIsWatchedMarked] = useState(() => {
-    const saved = localStorage.getItem(`watched_${id}`);
-    return saved === 'true';
-  });
-
   useEffect(() => {
     if (!id) return;
-    const token = getToken();
     fetchGenres().then(setAllGenres).catch(() => {});
-    
-    Promise.all([
-    fetchMediaById(id),
-    token ? getMe(token) : Promise.resolve(null)
-    ])
-    .then(([mediaData, user]) => {
-        setMedia(mediaData);
-        setCurrentUser(user);
-        
-        setEditName(mediaData.name);
-        setEditDescription(mediaData.description);
-        setEditPosterUrl(mediaData.posterUrl ?? '');
-        setEditDurationMinutes(mediaData.durationMinutes ? String(mediaData.durationMinutes) : '');
-        setEditGenreIds(mediaData.genres.map((g) => g.id));
-        
-        setEditAgeRestriction(mediaData.ageRestriction ?? 'NONE');
-    })
-    .catch((err) => setError(err.message))
-    .finally(() => setLoading(false));
+    fetchSeasons(id).then(setSeasons).catch(() => {});
 
-    if (token) {
-        getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
-        getUserRating(token, id).then(setUserRating).catch(() => {});
-        getMe(token).then((user) => setViewerDateOfBirth(user.dateOfBirth)).catch(() => {});
-    }
+    getValidAccessToken().then((token) => {
+      Promise.all([
+      fetchMediaById(id),
+      token ? getMe(token) : Promise.resolve(null)
+      ])
+      .then(([mediaData, user]) => {
+          setMedia(mediaData);
+          setCurrentUser(user);
+
+          setEditName(mediaData.name);
+          setEditDescription(mediaData.description);
+          setEditPosterUrl(mediaData.posterUrl ?? '');
+          setEditDurationMinutes(mediaData.durationMinutes ? String(mediaData.durationMinutes) : '');
+          setEditGenreIds(mediaData.genres.map((g) => g.id));
+
+          setEditAgeRestriction(mediaData.ageRestriction ?? 'NONE');
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+
+      if (token) {
+          getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
+          getUserRating(token, id).then(setUserRating).catch(() => {});
+          getMe(token).then((user) => setViewerDateOfBirth(user.dateOfBirth)).catch(() => {});
+          getEpisodeWatchStatuses(token, id).then(setEpisodeStatuses).catch(() => {});
+          getSeasonWatchStatuses(token, id).then(setSeasonStatuses).catch(() => {});
+      }
+    });
   }, [id]);
+
+  // Re-pulled after any season/episode mutation or watch-status toggle, since
+  // the backend recomputes season rollup status as a side effect.
+  async function refreshSeasonsAndEpisodes() {
+    if (!id) return;
+    const [seasonsData, mediaData] = await Promise.all([
+      fetchSeasons(id),
+      fetchMediaById(id),
+    ]);
+    setSeasons(seasonsData);
+    setMedia(mediaData);
+
+    const token = await getValidAccessToken();
+    if (token) {
+      const [episodeStatusData, seasonStatusData, watchStatusData] = await Promise.all([
+        getEpisodeWatchStatuses(token, id),
+        getSeasonWatchStatuses(token, id),
+        getWatchStatus(token, id),
+      ]);
+      setEpisodeStatuses(episodeStatusData);
+      setSeasonStatuses(seasonStatusData);
+      setWatchStatusState(watchStatusData);
+    }
+  }
 
   const requiredAge = media ? minimumAgeFor(media.ageRestriction) : 0;
   const canWatch =
     requiredAge === 0 ||
     (viewerDateOfBirth !== null && calculateAge(viewerDateOfBirth) >= requiredAge);
 
-  async function updateStatus(status: 'PLANNED_TO_WATCH' | 'WATCHING' | 'WATCHED') {
-      const token = getToken();
-      if (!token || !id) return;
+  async function updateStatus(
+    status: 'NOT_WATCHED' | 'PLANNED_TO_WATCH' | 'WATCHING' | 'WATCHED',
+  ) {
+      if (!id) return;
+      const token = await getValidAccessToken();
+      if (!token) return;
       await setWatchStatus(token, id, status);
       setWatchStatusState(status);
   }
 
   async function handleRate(value: number) {
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
     await rateMedia(token, id, value);
     setUserRating(value);
     fetchMediaById(id).then(setMedia);
@@ -109,8 +154,9 @@ export function MediaDetailPage() {
 
   async function handleSaveChanges(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
 
     setIsSubmitting(true);
     try {
@@ -137,19 +183,22 @@ export function MediaDetailPage() {
         return;
       }
       setPlayError(null);
-      updateStatus('WATCHING').catch((err) => {
-        setPlayError(err instanceof Error ? err.message : 'Unable to play this title.');
-      });
+      updateStatus('WATCHING')
+        .then(() => {
+          setPlaySuccessMessage(
+            `▶ Now playing "${media?.name}" — added to your Currently Watching list.`,
+          );
+          setTimeout(() => setPlaySuccessMessage(null), 3500);
+        })
+        .catch((err) => {
+          setPlayError(err instanceof Error ? err.message : 'Unable to play this title.');
+        });
   }
 
   function handleAddToWatchlist() {
-    const nextState = !isWatchlistAdded;
-    setIsWatchlistAdded(nextState);
-    localStorage.setItem(`watchlist_${id}`, String(nextState));
+    const nextState = watchStatus !== 'PLANNED_TO_WATCH';
 
     if (nextState) {
-        setIsWatchedMarked(false);
-        localStorage.removeItem(`watched_${id}`);
         updateStatus('PLANNED_TO_WATCH');
 
         if (!canWatch && media) {
@@ -159,19 +208,18 @@ export function MediaDetailPage() {
           );
         }
     } else {
+      updateStatus('NOT_WATCHED');
       setWatchlistNotice(null);
     }
   }
 
   function handleMarkAsWatched() {
-    const nextState = !isWatchedMarked;
-    setIsWatchedMarked(nextState);
-    localStorage.setItem(`watched_${id}`, String(nextState));
-    
+    const nextState = watchStatus !== 'WATCHED';
+
     if (nextState) {
-        setIsWatchlistAdded(false);
-        localStorage.removeItem(`watchlist_${id}`);
         updateStatus('WATCHED');
+    } else {
+        updateStatus('NOT_WATCHED');
     }
   }
 
@@ -181,8 +229,9 @@ export function MediaDetailPage() {
     );
     if (!confirmDelete) return;
 
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
 
     try {
         await deleteMedia(token, id);
@@ -192,33 +241,53 @@ export function MediaDetailPage() {
     }
     }
 
+  async function handleAddSeason(e: React.FormEvent) {
+    e.preventDefault();
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
+
+    const title = newSeasonFirstEpisodeTitle.trim();
+    if (!title) {
+      setAddSeasonError('Enter a title for the first episode.');
+      return;
+    }
+
+    setIsAddingSeason(true);
+    setAddSeasonError(null);
+    try {
+      await addSeason(token, id, title);
+      await refreshSeasonsAndEpisodes();
+      setNewSeasonFirstEpisodeTitle('');
+      setIsAddingSeasonOpen(false);
+    } catch (err) {
+      setAddSeasonError(
+        err instanceof Error ? err.message : 'Unable to add season.',
+      );
+    } finally {
+      setIsAddingSeason(false);
+    }
+  }
+
   async function handleAddEpisode(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
 
-    const seasonNum = Number(newSeasonNum);
-    const episodeNum = Number(newEpisodeNum);
     const title = newEpisodeTitle.trim();
+    const seasonNum = selectedSeasonNum ?? seasons.at(-1)?.seasonNum ?? null;
 
-    if (
-      !title ||
-      !Number.isInteger(seasonNum) ||
-      seasonNum < 1 ||
-      !Number.isInteger(episodeNum) ||
-      episodeNum < 1
-    ) {
-      setAddEpisodeError('Enter a valid season, episode number, and title.');
+    if (!title || seasonNum === null) {
+      setAddEpisodeError('Pick a season and enter a title.');
       return;
     }
 
     setIsAddingEpisode(true);
     setAddEpisodeError(null);
     try {
-      await addEpisode(token, id, { seasonNum, episodeNum, title });
-      const updated = await fetchMediaById(id);
-      setMedia(updated);
-      setNewEpisodeNum(String(episodeNum + 1));
+      await addEpisode(token, id, { seasonNum, title });
+      await refreshSeasonsAndEpisodes();
       setNewEpisodeTitle('');
     } catch (err) {
       setAddEpisodeError(
@@ -226,6 +295,18 @@ export function MediaDetailPage() {
       );
     } finally {
       setIsAddingEpisode(false);
+    }
+  }
+
+  async function handleToggleEpisodeWatched(episodeId: string, watched: boolean) {
+    const token = await getValidAccessToken();
+    if (!token) return;
+
+    try {
+      await setEpisodeWatchStatus(token, episodeId, watched);
+      await refreshSeasonsAndEpisodes();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Unable to update episode status.');
     }
   }
 
@@ -303,11 +384,27 @@ export function MediaDetailPage() {
             >
               ▶ Play
             </button>
-            <button className="action-button" onClick={handleAddToWatchlist}>
-              {isWatchlistAdded ? '✓ Added to Watchlist' : '+ Add to Watchlist'}
+            <button
+              className={
+                watchStatus === 'PLANNED_TO_WATCH'
+                  ? 'action-button action-button--primary'
+                  : 'action-button'
+              }
+              onClick={handleAddToWatchlist}
+            >
+              {watchStatus === 'PLANNED_TO_WATCH'
+                ? '✓ Added to Watchlist'
+                : '+ Add to Watchlist'}
             </button>
-            <button className="action-button" onClick={handleMarkAsWatched}>
-              {isWatchedMarked ? '✓ Marked' : '+ Mark as Watched'}
+            <button
+              className={
+                watchStatus === 'WATCHED'
+                  ? 'action-button action-button--primary'
+                  : 'action-button'
+              }
+              onClick={handleMarkAsWatched}
+            >
+              {watchStatus === 'WATCHED' ? '✓ Marked' : '+ Mark as Watched'}
             </button>
             {currentUser?.role === 'admin' && (
               <button
@@ -322,41 +419,83 @@ export function MediaDetailPage() {
               <button
                 type="button"
                 className="action-button action-button--primary"
+                onClick={() => setIsAddingSeasonOpen((prev) => !prev)}
+              >
+                + Add Season
+              </button>
+            )}
+            {currentUser?.role === 'admin' && media.type === 'SERIES' && (
+              <button
+                type="button"
+                className="action-button action-button--primary"
                 onClick={() => setIsAddingEpisodeOpen((prev) => !prev)}
+                disabled={seasons.length === 0}
+                title={seasons.length === 0 ? 'Add a season first' : undefined}
               >
                 + Add Episode
               </button>
             )}
           </div>
 
+          {isAddingSeasonOpen && (
+            <form className="edit-media-panel" onSubmit={handleAddSeason}>
+              <h3>Add Season</h3>
+              <p className="detail-meta">
+                A season always starts with one episode — season and episode
+                numbers are assigned automatically.
+              </p>
+              <div className="field">
+                <label htmlFor="new-season-episode-title">First episode title</label>
+                <input
+                  id="new-season-episode-title"
+                  type="text"
+                  value={newSeasonFirstEpisodeTitle}
+                  onChange={(e) => setNewSeasonFirstEpisodeTitle(e.target.value)}
+                  required
+                />
+              </div>
+              {addSeasonError && (
+                <p className="detail-age-restriction-notice">{addSeasonError}</p>
+              )}
+              <div className="form-panel-buttons">
+                <button
+                  type="submit"
+                  className="action-button action-button--primary"
+                  disabled={isAddingSeason}
+                >
+                  {isAddingSeason ? 'Adding...' : 'Add Season'}
+                </button>
+                <button
+                  type="button"
+                  className="action-button"
+                  onClick={() => setIsAddingSeasonOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
           {isAddingEpisodeOpen && (
             <form className="edit-media-panel" onSubmit={handleAddEpisode}>
               <h3>Add Episode</h3>
-              <div className="field-row">
-                <div className="field">
-                  <label htmlFor="new-episode-season">Season</label>
-                  <input
-                    id="new-episode-season"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={newSeasonNum}
-                    onChange={(e) => setNewSeasonNum(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="field">
-                  <label htmlFor="new-episode-num">Episode</label>
-                  <input
-                    id="new-episode-num"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={newEpisodeNum}
-                    onChange={(e) => setNewEpisodeNum(e.target.value)}
-                    required
-                  />
-                </div>
+              <p className="detail-meta">
+                Episode number is assigned automatically — pick a season and
+                enter a title.
+              </p>
+              <div className="field">
+                <label htmlFor="new-episode-season">Season</label>
+                <select
+                  id="new-episode-season"
+                  value={selectedSeasonNum ?? seasons.at(-1)?.seasonNum ?? ''}
+                  onChange={(e) => setSelectedSeasonNum(Number(e.target.value))}
+                >
+                  {seasons.map((season) => (
+                    <option key={season.id} value={season.seasonNum}>
+                      Season {season.seasonNum}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="field">
                 <label htmlFor="new-episode-title">Title</label>
@@ -487,6 +626,12 @@ export function MediaDetailPage() {
               </div>
             </form>
           )}
+          {playSuccessMessage && (
+            <p className="detail-play-success-notice" role="status">
+              {playSuccessMessage}
+            </p>
+          )}
+
           {playError && (
             <p className="detail-age-restriction-notice">{playError}</p>)}
 
@@ -497,7 +642,14 @@ export function MediaDetailPage() {
           )}
 
           {media.type === 'SERIES' && (
-            <EpisodeList mediaId={media.id} episodes={media.episodes ?? []} />
+            <EpisodeList
+              seasons={seasons}
+              episodes={media.episodes ?? []}
+              episodeStatuses={episodeStatuses}
+              seasonStatuses={seasonStatuses}
+              canToggleWatched={currentUser !== null}
+              onToggleEpisodeWatched={handleToggleEpisodeWatched}
+            />
           )}
         </div>
       </div>
@@ -506,43 +658,76 @@ export function MediaDetailPage() {
 }
 
 function EpisodeList({
+  seasons,
   episodes,
+  episodeStatuses,
+  seasonStatuses,
+  canToggleWatched,
+  onToggleEpisodeWatched,
 }: {
-  mediaId: string;
+  seasons: Season[];
   episodes: NonNullable<Media['episodes']>;
+  episodeStatuses: EpisodeWatchStatusEntry[];
+  seasonStatuses: SeasonWatchStatusEntry[];
+  canToggleWatched: boolean;
+  onToggleEpisodeWatched: (episodeId: string, watched: boolean) => void;
 }) {
-  if (episodes.length === 0) {
+  if (seasons.length === 0) {
     return (
       <div className="episode-section">
         <h2>Episodes</h2>
-        <p className="detail-meta">No episodes added yet.</p>
+        <p className="detail-meta">No seasons added yet.</p>
       </div>
     );
   }
 
-  const bySeason = episodes.reduce<Record<number, typeof episodes>>((acc, ep) => {
-    (acc[ep.seasonNum] ??= []).push(ep);
-    return acc;
-  }, {});
+  const episodeWatchedMap = new Map(episodeStatuses.map((e) => [e.episodeId, e.watched]));
+  const seasonWatchedMap = new Map(seasonStatuses.map((s) => [s.seasonNum, s.watched]));
 
   return (
     <div className="episode-section">
       <h2>Episodes</h2>
-      {Object.entries(bySeason).map(([season, seasonEpisodes]) => (
-        <div key={season} className="season-group">
-          <h3>Season {season}</h3>
-          <ul className="episode-list">
-            {seasonEpisodes
-              .sort((a, b) => a.episodeNum - b.episodeNum)
-              .map((ep) => (
-                <li key={ep.id} className="episode-row">
-                  <span className="episode-number">E{ep.episodeNum}</span>
-                  <span className="episode-title">{ep.title}</span>
-                </li>
-              ))}
-          </ul>
-        </div>
-      ))}
+      {seasons.map((season) => {
+        const seasonEpisodes = episodes
+          .filter((ep) => ep.seasonNum === season.seasonNum)
+          .sort((a, b) => a.episodeNum - b.episodeNum);
+        const seasonWatched = seasonWatchedMap.get(season.seasonNum) ?? false;
+
+        return (
+          <div key={season.id} className="season-group">
+            <h3>
+              Season {season.seasonNum}
+              {seasonWatched && (
+                <span className="season-watched-badge"> · ✓ Watched</span>
+              )}
+            </h3>
+            {seasonEpisodes.length === 0 ? (
+              <p className="detail-meta">No episodes added yet.</p>
+            ) : (
+              <ul className="episode-list">
+                {seasonEpisodes.map((ep) => {
+                  const watched = episodeWatchedMap.get(ep.id) ?? false;
+                  return (
+                    <li key={ep.id} className="episode-row">
+                      <span className="episode-number">E{ep.episodeNum}</span>
+                      <span className="episode-title">{ep.title}</span>
+                      {canToggleWatched && (
+                        <button
+                          type="button"
+                          className="episode-watch-toggle"
+                          onClick={() => onToggleEpisodeWatched(ep.id, !watched)}
+                        >
+                          {watched ? '✓ Watched' : 'Mark Watched'}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import { getToken } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import { getMe, type AuthUser } from '../api/auth';
-import { fetchMedia } from '../api/media';
+import { fetchMedia, getWatchHistory, getCurrentlyWatching, getWatchlist } from '../api/media';
 import { fetchGenres } from '../api/genres';
 import { useMediaSearch } from '../hooks/useMediaSearch';
 import { formatGenreLabel } from '../constants/interests';
@@ -12,8 +13,14 @@ import type { Media } from '../types/media';
 import type { Genre } from '../types/genre';
 
 type Category = 'Newest' | 'Highest Rated';
+type TypeFilter = 'All' | 'MOVIE' | 'SERIES';
 
 const categories: Category[] = ['Newest', 'Highest Rated'];
+const typeFilters: { value: TypeFilter; label: string }[] = [
+  { value: 'All', label: 'All' },
+  { value: 'MOVIE', label: 'Movies' },
+  { value: 'SERIES', label: 'Series' },
+];
 
 export function HomePage() {
   const token = getToken();
@@ -21,26 +28,53 @@ export function HomePage() {
   const [media, setMedia] = useState<Media[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [hiddenMediaIds, setHiddenMediaIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
   const [selectedGenreId, setSelectedGenreId] = useState<string>('All');
+  const [selectedType, setSelectedType] = useState<TypeFilter>('All');
   const [searchByInterests, setSearchByInterests] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     if (!token) return;
 
-    Promise.all([fetchMedia(), fetchGenres(), getMe(token)])
-      .then(([mediaData, genreData, user]) => {
-        setMedia(mediaData);
-        setGenres(genreData);
-        setCurrentUser(user);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    getValidAccessToken().then((validToken) => {
+      if (!validToken) {
+        setError('Your session has expired. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      Promise.all([fetchMedia(), fetchGenres(), getMe(validToken)])
+        .then(([mediaData, genreData, user]) => {
+          setMedia(mediaData);
+          setGenres(genreData);
+          setCurrentUser(user);
+        })
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+
+      // Best-effort — if this fails, the home page just shows everything
+      // (including already-watched/in-progress/planned items) rather than
+      // breaking entirely. Home is meant to surface only NOT_WATCHED media.
+      Promise.all([
+        getWatchHistory(validToken),
+        getCurrentlyWatching(validToken),
+        getWatchlist(validToken),
+      ])
+        .then(([watchedMedia, watchingMedia, plannedMedia]) => {
+          setHiddenMediaIds(
+            new Set(
+              [...watchedMedia, ...watchingMedia, ...plannedMedia].map((item) => item.id),
+            ),
+          );
+        })
+        .catch(() => {});
+    });
   }, [token]);
 
   const selectedGenreName = useMemo(() => {
@@ -57,18 +91,21 @@ export function HomePage() {
   const filteredMedia = useMemo(() => {
     const baseList = searchResults ?? media;
 
-    return [...baseList].sort((a, b) => {
-      const ratingA = a.rating ?? 0;
-      const ratingB = b.rating ?? 0;
-      const yearA = new Date(a.releaseDate).getFullYear();
-      const yearB = new Date(b.releaseDate).getFullYear();
+    return baseList
+      .filter((item) => !hiddenMediaIds.has(item.id))
+      .filter((item) => selectedType === 'All' || item.type === selectedType)
+      .sort((a, b) => {
+        const ratingA = a.rating ?? 0;
+        const ratingB = b.rating ?? 0;
+        const yearA = new Date(a.releaseDate).getFullYear();
+        const yearB = new Date(b.releaseDate).getFullYear();
 
-      if (selectedCategory === 'Highest Rated') {
-        return ratingB - ratingA || yearB - yearA;
-      }
-      return yearB - yearA || ratingB - ratingA;
-    });
-  }, [media, searchResults, selectedCategory]);
+        if (selectedCategory === 'Highest Rated') {
+          return ratingB - ratingA || yearB - yearA;
+        }
+        return yearB - yearA || ratingB - ratingA;
+      });
+  }, [media, searchResults, selectedCategory, selectedType, hiddenMediaIds]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
@@ -149,6 +186,24 @@ export function HomePage() {
                       onClick={() => setSelectedCategory(category)}
                     >
                       {category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="filter-group">
+                <span className="filter-label">Type</span>
+                <div className="chip-row">
+                  {typeFilters.map((type) => (
+                    <button
+                      key={type.value}
+                      type="button"
+                      className={
+                        selectedType === type.value ? 'chip chip--active' : 'chip'
+                      }
+                      onClick={() => setSelectedType(type.value)}
+                    >
+                      {type.label}
                     </button>
                   ))}
                 </div>

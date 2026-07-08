@@ -33,3 +33,31 @@
 .add-media-page .interest-picker {
   max-height: 160px;
 }
+
+.add-media-page .season-draft {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.add-media-page .season-draft-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.add-media-page .season-draft-episode-row {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.add-media-page .episode-number-preview {
+  color: var(--color-sage-dark);
+  font-weight: 600;
+  font-size: 13px;
+}
