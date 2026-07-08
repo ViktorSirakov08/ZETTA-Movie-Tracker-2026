@@ -25,7 +25,6 @@ export const GENRE_NAMES = [
 
 export type GenreName = (typeof GENRE_NAMES)[number];
 
-/** Each genre's specific interest tags. */
 export const GENRE_KEYWORDS: Record<GenreName, string[]> = {
   action: ['action', 'fight', 'explosion', 'stunt', 'martial arts'],
   adventure: ['adventure', 'quest', 'expedition', 'journey', 'survival'],

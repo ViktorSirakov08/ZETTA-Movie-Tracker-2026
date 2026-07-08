@@ -91,19 +91,19 @@ export function HomePage() {
   const filteredMedia = useMemo(() => {
     const baseList = searchResults ?? media;
 
-    return baseList
+    return [...baseList]
       .filter((item) => !hiddenMediaIds.has(item.id))
       .filter((item) => selectedType === 'All' || item.type === selectedType)
       .sort((a, b) => {
         const ratingA = a.rating ?? 0;
         const ratingB = b.rating ?? 0;
-        const yearA = new Date(a.releaseDate).getFullYear();
-        const yearB = new Date(b.releaseDate).getFullYear();
+        const releaseTimeA = new Date(a.releaseDate).getTime();
+        const releaseTimeB = new Date(b.releaseDate).getTime();
 
         if (selectedCategory === 'Highest Rated') {
-          return ratingB - ratingA || yearB - yearA;
+          return ratingB - ratingA || releaseTimeB - releaseTimeA;
         }
-        return yearB - yearA || ratingB - ratingA;
+        return releaseTimeB - releaseTimeA || ratingB - ratingA;
       });
   }, [media, searchResults, selectedCategory, selectedType, hiddenMediaIds]);
 
