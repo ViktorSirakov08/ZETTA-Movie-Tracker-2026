@@ -7,8 +7,11 @@ import { HistoryPage } from './pages/HistoryPage';
 import { WatchlistPage } from './pages/WatchlistPage';
 import { AddMediaPage } from './pages/AddMediaPage';
 import { MediaDetailPage } from './pages/MediaPage';
+import { useSilentTokenRefresh } from './hooks/useSilentTokenRefresh';
 
 function App() {
+  useSilentTokenRefresh();
+
   return (
     <BrowserRouter>
       <Routes>

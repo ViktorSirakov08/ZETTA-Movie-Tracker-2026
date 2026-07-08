@@ -4,9 +4,14 @@ import { Link, Navigate } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
 import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
-import { getMe, updateProfile, type AuthUser } from '../api/auth';
+import { getMe, logoutUser, updateProfile, type AuthUser } from '../api/auth';
 import { ApiError } from '../api/client';
-import { clearSession, getToken, updateStoredUser } from '../lib/auth-storage';
+import {
+  clearSession,
+  getRefreshToken,
+  getToken,
+  updateStoredUser,
+} from '../lib/auth-storage';
 import { INTERESTS, INTEREST_LABELS } from '../constants/interests';
 
 export function ProfilePage() {
@@ -39,7 +44,14 @@ export function ProfilePage() {
     return <Navigate to="/login" replace />;
   }
 
-  function handleLogout() {
+  async function handleLogout() {
+    const refreshToken = getRefreshToken();
+    // Best-effort — if this fails (network hiccup, already expired), the
+    // user still gets logged out locally; the refresh token just lingers
+    // in the DB until it expires on its own instead of being revoked early.
+    if (refreshToken) {
+      await logoutUser(refreshToken).catch(() => {});
+    }
     clearSession();
     window.location.href = '/login';
   }
