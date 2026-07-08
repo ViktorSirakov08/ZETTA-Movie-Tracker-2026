@@ -227,7 +227,7 @@ export function AddMediaPage() {
       const parsed = parseEpisodeDrafts();
       if (!parsed || parsed.length === 0) {
         setError(
-          'Add at least one episode with a valid season, number, and title.',
+          'Episode and season must be numbers',
         );
         return;
       }
@@ -332,7 +332,7 @@ export function AddMediaPage() {
               <input
                 id="poster-url"
                 type="url"
-                placeholder="https://example.com/poster.jpg"
+                placeholder=""
                 value={posterUrl.startsWith('data:') ? '' : posterUrl}
                 onChange={(e) => {
                   setPosterUrl(e.target.value);
@@ -373,7 +373,7 @@ export function AddMediaPage() {
                 type="number"
                 min="1"
                 step="1"
-                placeholder={mediaType === 'MOVIE' ? '120' : 'Optional'}
+                placeholder={mediaType === 'MOVIE' ? '' : ''}
                 value={durationMinutes}
                 onChange={(e) => setDurationMinutes(e.target.value)}
               />

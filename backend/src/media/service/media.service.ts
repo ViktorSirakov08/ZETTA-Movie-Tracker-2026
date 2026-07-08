@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Media } from '../entity/media.entity';
+import { Media, AgeRestriction } from '../entity/media.entity';
 import { Genre } from '../entity/genre.entity';
 import { Episode } from '../entity/episode.entity';
 import { Interest } from '../../interests/entities/interest.entity';
@@ -79,7 +79,19 @@ export class MediaService {
   }
 
   async create(dto: CreateMediaDto): Promise<Media> {
-    const { genreIds, interestIds, interestNames, ...rest } = dto;
+    const {
+      genreIds,
+      interestIds,
+      interestNames,
+      ageRestricted,
+      ageRestricted13,
+      ...rest
+    } = dto;
+
+    const ageRestriction = rest.ageRestriction ??
+      (ageRestricted ? AgeRestriction.PG18 :
+      ageRestricted13 ? AgeRestriction.PG13 :
+      AgeRestriction.NONE);
 
     const genres = await this.genreRepo.findBy({ id: In(genreIds) });
     let interests: Interest[] = [];
@@ -91,6 +103,7 @@ export class MediaService {
 
     const media = this.mediaRepo.create({
       ...rest,
+      ageRestriction,
       genres,
       interests,
       rating: null, // always starts as "No Rating"
@@ -102,9 +115,23 @@ export class MediaService {
 
   async update(id: string, dto: UpdateMediaDto): Promise<Media> {
     const media = await this.findOne(id);
-    const { genreIds, interestIds, ...rest } = dto;
+    const {
+      genreIds,
+      interestIds,
+      ageRestricted,
+      ageRestricted13,
+      ...rest
+    } = dto;
+
+    const ageRestriction = rest.ageRestriction ??
+      (ageRestricted ? AgeRestriction.PG18 :
+      ageRestricted13 ? AgeRestriction.PG13 :
+      undefined);
 
     Object.assign(media, rest);
+    if (ageRestriction !== undefined) {
+      media.ageRestriction = ageRestriction;
+    }
 
     if (genreIds !== undefined) {
       media.genres = await this.genreRepo.findBy({ id: In(genreIds) });

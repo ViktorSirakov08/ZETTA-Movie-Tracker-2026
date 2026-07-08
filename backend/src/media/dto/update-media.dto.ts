@@ -8,6 +8,7 @@ import {
   IsUUID,
   IsArray,
   IsIn,
+  IsBoolean,
 } from 'class-validator';
 import { AgeRestriction, MediaType } from '../entity/media.entity';
 import { INTEREST_NAMES } from '../../common/constants/interest-names';
@@ -45,6 +46,14 @@ export class UpdateMediaDto {
   @IsArray()
   @IsIn(INTEREST_NAMES, { each: true })
   interestNames?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  ageRestricted?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  ageRestricted13?: boolean;
 
   @IsOptional()
   @IsEnum(AgeRestriction)
