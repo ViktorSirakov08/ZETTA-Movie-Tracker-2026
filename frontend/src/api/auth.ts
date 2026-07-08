@@ -11,7 +11,13 @@ export interface AuthUser {
 
 export interface LoginResponse {
   accessToken: string;
+  refreshToken: string;
   user: AuthUser;
+}
+
+export interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
 }
 
 export function registerUser(data: {
@@ -42,6 +48,22 @@ export function getMe(token: string): Promise<AuthUser> {
   return fetch(`${API_BASE_URL}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   }).then((res) => parseResponse<AuthUser>(res));
+}
+
+export function refreshAccessToken(refreshToken: string): Promise<TokenPair> {
+  return fetch(`${API_BASE_URL}/auth/refresh`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  }).then((res) => parseResponse<TokenPair>(res));
+}
+
+export function logoutUser(refreshToken: string): Promise<void> {
+  return fetch(`${API_BASE_URL}/auth/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  }).then((res) => parseResponse<void>(res));
 }
 
 export function updateProfile(

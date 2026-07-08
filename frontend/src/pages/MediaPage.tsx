@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getToken } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import { setWatchStatus, getWatchStatus } from '../api/media';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
@@ -71,36 +71,37 @@ export function MediaDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    const token = getToken();
     fetchGenres().then(setAllGenres).catch(() => {});
     fetchSeasons(id).then(setSeasons).catch(() => {});
 
-    Promise.all([
-    fetchMediaById(id),
-    token ? getMe(token) : Promise.resolve(null)
-    ])
-    .then(([mediaData, user]) => {
-        setMedia(mediaData);
-        setCurrentUser(user);
-        
-        setEditName(mediaData.name);
-        setEditDescription(mediaData.description);
-        setEditPosterUrl(mediaData.posterUrl ?? '');
-        setEditDurationMinutes(mediaData.durationMinutes ? String(mediaData.durationMinutes) : '');
-        setEditGenreIds(mediaData.genres.map((g) => g.id));
-        
-        setEditAgeRestriction(mediaData.ageRestriction ?? 'NONE');
-    })
-    .catch((err) => setError(err.message))
-    .finally(() => setLoading(false));
+    getValidAccessToken().then((token) => {
+      Promise.all([
+      fetchMediaById(id),
+      token ? getMe(token) : Promise.resolve(null)
+      ])
+      .then(([mediaData, user]) => {
+          setMedia(mediaData);
+          setCurrentUser(user);
 
-    if (token) {
-        getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
-        getUserRating(token, id).then(setUserRating).catch(() => {});
-        getMe(token).then((user) => setViewerDateOfBirth(user.dateOfBirth)).catch(() => {});
-        getEpisodeWatchStatuses(token, id).then(setEpisodeStatuses).catch(() => {});
-        getSeasonWatchStatuses(token, id).then(setSeasonStatuses).catch(() => {});
-    }
+          setEditName(mediaData.name);
+          setEditDescription(mediaData.description);
+          setEditPosterUrl(mediaData.posterUrl ?? '');
+          setEditDurationMinutes(mediaData.durationMinutes ? String(mediaData.durationMinutes) : '');
+          setEditGenreIds(mediaData.genres.map((g) => g.id));
+
+          setEditAgeRestriction(mediaData.ageRestriction ?? 'NONE');
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+
+      if (token) {
+          getWatchStatus(token, id).then(setWatchStatusState).catch(() => {});
+          getUserRating(token, id).then(setUserRating).catch(() => {});
+          getMe(token).then((user) => setViewerDateOfBirth(user.dateOfBirth)).catch(() => {});
+          getEpisodeWatchStatuses(token, id).then(setEpisodeStatuses).catch(() => {});
+          getSeasonWatchStatuses(token, id).then(setSeasonStatuses).catch(() => {});
+      }
+    });
   }, [id]);
 
   // Re-pulled after any season/episode mutation or watch-status toggle, since
@@ -114,7 +115,7 @@ export function MediaDetailPage() {
     setSeasons(seasonsData);
     setMedia(mediaData);
 
-    const token = getToken();
+    const token = await getValidAccessToken();
     if (token) {
       const [episodeStatusData, seasonStatusData, watchStatusData] = await Promise.all([
         getEpisodeWatchStatuses(token, id),
@@ -135,15 +136,17 @@ export function MediaDetailPage() {
   async function updateStatus(
     status: 'NOT_WATCHED' | 'PLANNED_TO_WATCH' | 'WATCHING' | 'WATCHED',
   ) {
-      const token = getToken();
-      if (!token || !id) return;
+      if (!id) return;
+      const token = await getValidAccessToken();
+      if (!token) return;
       await setWatchStatus(token, id, status);
       setWatchStatusState(status);
   }
 
   async function handleRate(value: number) {
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
     await rateMedia(token, id, value);
     setUserRating(value);
     fetchMediaById(id).then(setMedia);
@@ -151,8 +154,9 @@ export function MediaDetailPage() {
 
   async function handleSaveChanges(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
 
     setIsSubmitting(true);
     try {
@@ -225,8 +229,9 @@ export function MediaDetailPage() {
     );
     if (!confirmDelete) return;
 
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
 
     try {
         await deleteMedia(token, id);
@@ -238,8 +243,9 @@ export function MediaDetailPage() {
 
   async function handleAddSeason(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
 
     const title = newSeasonFirstEpisodeTitle.trim();
     if (!title) {
@@ -265,8 +271,9 @@ export function MediaDetailPage() {
 
   async function handleAddEpisode(e: React.FormEvent) {
     e.preventDefault();
-    const token = getToken();
-    if (!token || !id) return;
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
 
     const title = newEpisodeTitle.trim();
     const seasonNum = selectedSeasonNum ?? seasons.at(-1)?.seasonNum ?? null;
@@ -292,7 +299,7 @@ export function MediaDetailPage() {
   }
 
   async function handleToggleEpisodeWatched(episodeId: string, watched: boolean) {
-    const token = getToken();
+    const token = await getValidAccessToken();
     if (!token) return;
 
     try {

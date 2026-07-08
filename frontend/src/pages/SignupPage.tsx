@@ -48,8 +48,8 @@ export function SignupPage() {
     setSubmitting(true);
     try {
       await registerUser({ username, password, dateOfBirth, interests });
-      const { accessToken, user } = await loginUser({ username, password });
-      saveSession(accessToken, user);
+      const { accessToken, refreshToken, user } = await loginUser({ username, password });
+      saveSession(accessToken, refreshToken, user);
       navigate('/home');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to sign up.');

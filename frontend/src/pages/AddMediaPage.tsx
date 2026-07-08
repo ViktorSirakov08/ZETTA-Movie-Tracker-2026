@@ -14,6 +14,7 @@ import {
   INTEREST_NAMES,
 } from '../constants/interests';
 import { getToken } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 
 type MediaType = 'MOVIE' | 'SERIES';
 type AgeRestriction = 'none' | '13' | '18';
@@ -88,9 +89,15 @@ export function AddMediaPage() {
       return;
     }
 
-    getMe(token)
-      .then((user) => {
-        setAuthorized(user.role === 'admin');
+    getValidAccessToken()
+      .then((validToken) => {
+        if (!validToken) {
+          setAuthorized(false);
+          return;
+        }
+        return getMe(validToken).then((user) => {
+          setAuthorized(user.role === 'admin');
+        });
       })
       .catch(() => {
         setAuthorized(false);
@@ -124,7 +131,11 @@ export function AddMediaPage() {
     setPosterPreview(previewUrl);
 
     try {
-      const uploadedUrl = await uploadPoster(token, file);
+      const validToken = await getValidAccessToken();
+      if (!validToken) {
+        throw new Error('Your session has expired. Please log in again.');
+      }
+      const uploadedUrl = await uploadPoster(validToken, file);
       setPosterUrl(uploadedUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload poster.');
@@ -229,9 +240,14 @@ export function AddMediaPage() {
 
     setSubmitting(true);
     try {
+      const validToken = await getValidAccessToken();
+      if (!validToken) {
+        throw new Error('Your session has expired. Please log in again.');
+      }
+
       const genreIds = await ensureGenreIds(selectedGenreNames);
 
-      const created = await createMedia(token, {
+      const created = await createMedia(validToken, {
         type: mediaType,
         name: name.trim(),
         releaseDate,
@@ -250,9 +266,9 @@ export function AddMediaPage() {
           // addSeason creates the season's first episode itself (a season
           // is never empty), so only the remaining drafts need addEpisode.
           const [firstEpisode, ...restEpisodes] = seasonDraft.episodes;
-          const season = await addSeason(token, created.id, firstEpisode.title.trim());
+          const season = await addSeason(validToken, created.id, firstEpisode.title.trim());
           for (const episodeDraft of restEpisodes) {
-            await addEpisode(token, created.id, {
+            await addEpisode(validToken, created.id, {
               seasonNum: season.seasonNum,
               title: episodeDraft.title.trim(),
             });

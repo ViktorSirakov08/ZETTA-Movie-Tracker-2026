@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import './HomePage.css';
 import './WatchlistPage.css';
 import { getToken } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import { getCurrentlyWatching, getWatchlist } from '../api/media';
 import { useMediaSearch } from '../hooks/useMediaSearch';
 import { intersectByRelevance } from '../lib/media-filters';
@@ -105,7 +106,13 @@ export function WatchlistPage() {
       return;
     }
 
-    Promise.all([getWatchlist(token), getCurrentlyWatching(token)])
+    getValidAccessToken()
+      .then((validToken) => {
+        if (!validToken) {
+          throw new Error('Your session has expired. Please log in again.');
+        }
+        return Promise.all([getWatchlist(validToken), getCurrentlyWatching(validToken)]);
+      })
       .then(([plannedItems, watchingItems]) => {
         const filteredWatchlist = plannedItems.filter((item) => {
           const isExplicitlyWatched = localStorage.getItem(`watched_${item.id}`) === 'true';
