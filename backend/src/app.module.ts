@@ -15,6 +15,7 @@ import { Media } from './media/entity/media.entity';
 import { Episode } from './media/entity/episode.entity';
 import { Genre } from './media/entity/genre.entity';
 import { MediaWatchStatus } from './media/entity/media-watch-status.entity';
+import { Comment } from './media/entity/comments.entity';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { MediaWatchStatus } from './media/entity/media-watch-status.entity';
           Episode,
           Genre,
           MediaWatchStatus,
+          Comment,
         ],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',

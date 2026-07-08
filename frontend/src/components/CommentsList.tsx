@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { fetchComments } from '../api/comments';
 import type { Comment } from '../types/comment';
 import { CommentForm } from './CommentForm';
+import './CommentsList.css';
 
 export function CommentsList({ mediaId }: { mediaId: string }) {
   const [comments, setComments] = useState<Comment[] | null>(null);

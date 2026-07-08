@@ -10,8 +10,8 @@ import { SearchModule } from '../search/search.module';
 import { InterestsModule } from '../interests/interests.module';
 import { MediaService } from './service/media.service';
 import { MediaController } from './controller/media.controller';
-import { CommentsService } from './comments.service';
 import { CommentsController } from './comments.controller';
+import { CommentsService } from './comments.service';
 
 @Module({
   imports: [
