@@ -12,6 +12,7 @@ import { SearchModule } from '../search/search.module';
 import { InterestsModule } from '../interests/interests.module';
 import { MediaService } from './service/media.service';
 import { MediaController } from './controller/media.controller';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { MediaController } from './controller/media.controller';
     ]),
     SearchModule,
     InterestsModule,
+    StorageModule
   ],
   controllers: [MediaController],
   providers: [MediaService],
