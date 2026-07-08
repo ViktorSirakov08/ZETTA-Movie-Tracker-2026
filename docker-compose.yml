@@ -8,6 +8,8 @@ services:
     environment:
       NODE_ENV: development
       DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      ELASTICSEARCH_NODE: http://elasticsearch:9200
     depends_on:
       postgres:
         condition: service_healthy
