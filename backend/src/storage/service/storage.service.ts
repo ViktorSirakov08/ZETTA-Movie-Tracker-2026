@@ -11,10 +11,11 @@ export class StorageService {
 
   constructor(private readonly config: ConfigService) {
     this.bucket = this.config.getOrThrow<string>('MINIO_BUCKET');
-    this.publicEndpoint = this.config.getOrThrow<string>('MINIO_ENDPOINT');
+    const internalEndpoint = this.config.getOrThrow<string>('MINIO_ENDPOINT');
+    this.publicEndpoint = this.config.getOrThrow<string>('MINIO_PUBLIC_ENDPOINT');
 
     this.s3 = new S3Client({
-      endpoint: this.publicEndpoint,
+      endpoint: internalEndpoint,
       region: 'us-east-1', // required by the SDK, MinIO ignores the actual value
       credentials: {
         accessKeyId: this.config.getOrThrow<string>('MINIO_ACCESS_KEY'),

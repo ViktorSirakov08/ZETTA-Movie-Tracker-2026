@@ -45,15 +45,6 @@ function createSeasonDraft(): SeasonDraft {
   return { key: crypto.randomUUID(), episodes: [createEpisodeDraft()] };
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error('Failed to read poster file.'));
-    reader.readAsDataURL(file);
-  });
-}
-
 function readMultiSelectValues(event: ChangeEvent<HTMLSelectElement>): string[] {
   return Array.from(event.target.selectedOptions, (option) => option.value);
 }
@@ -119,6 +110,7 @@ export function AddMediaPage() {
   }
 
   async function handlePosterFileChange(event: ChangeEvent<HTMLInputElement>) {
+    console.log('handlePosterFileChange fired', event.target.files);
     const file = event.target.files?.[0];
     if (!file || !token) return;
 
