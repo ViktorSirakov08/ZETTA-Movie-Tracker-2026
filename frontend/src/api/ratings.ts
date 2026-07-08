@@ -24,3 +24,14 @@ export async function getUserRating(token: string, mediaId: string): Promise<num
   }
   return res.json();
 }
+
+export async function removeRating(token: string, mediaId: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/rating`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to remove rating: ${res.status}`);
+  }
+}

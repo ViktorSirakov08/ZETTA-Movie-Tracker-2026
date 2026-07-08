@@ -4,6 +4,7 @@ import { CreateRatingDto } from '../dto/create-rating.dto';
 import { JwtAuthGuard } from '../..//auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { User } from '../../users/entities/user.entity';
+import { Delete } from '@nestjs/common';
 
 @Controller('media')
 export class RatingsController {
@@ -23,5 +24,11 @@ export class RatingsController {
   @Get(':id/rating')
   getUserRating(@Param('id') mediaId: string, @CurrentUser() user: User) {
     return this.ratingsService.getUserRating(user.id, mediaId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id/rating')
+  removeRating(@Param('id') mediaId: string, @CurrentUser() user: User) {
+    return this.ratingsService.removeRating(user.id, mediaId);
   }
 }

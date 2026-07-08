@@ -308,6 +308,21 @@
   opacity: 1;
 }
 
+.remove-rating-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: rgba(43, 46, 40, 0.55);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.remove-rating-link:hover {
+  color: var(--sage-dark);
+}
+
 .form-field {
   display: flex;
   flex-direction: column;
