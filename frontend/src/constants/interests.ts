@@ -1,7 +1,3 @@
-/**
- * Broad content categories, used later to group/recommend media by genre.
- * Not something a user directly picks or that gets stored on their profile.
- */
 export const GENRE_NAMES = [
   'action',
   'adventure',
@@ -25,10 +21,6 @@ export const GENRE_NAMES = [
 
 export type GenreName = (typeof GENRE_NAMES)[number];
 
-/**
- * Mirrors backend/src/common/constants/interest-names.ts GENRE_KEYWORDS.
- * Keep in sync manually since frontend/backend are separate packages.
- */
 export const GENRE_KEYWORDS: Record<GenreName, string[]> = {
   action: ['action', 'fight', 'explosion', 'stunt', 'martial arts'],
   adventure: ['adventure', 'quest', 'expedition', 'journey', 'survival'],
@@ -50,10 +42,6 @@ export const GENRE_KEYWORDS: Record<GenreName, string[]> = {
   western: ['western', 'cowboy', 'outlaw', 'frontier'],
 };
 
-/**
- * Mirrors backend/src/common/constants/interest-names.ts INTEREST_NAMES.
- * Keep in sync manually since frontend/backend are separate packages.
- */
 export const INTEREST_NAMES = [
   'action',
   'adventure',
@@ -122,7 +110,6 @@ export const INTEREST_NAMES = [
 
 export type InterestName = (typeof INTEREST_NAMES)[number];
 
-/** @deprecated Use INTEREST_NAMES */
 export const INTERESTS = INTEREST_NAMES;
 
 export type Interest = string;

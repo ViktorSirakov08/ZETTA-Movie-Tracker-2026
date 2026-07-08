@@ -21,6 +21,7 @@ import { getMe, type AuthUser } from '../api/auth';
 import { calculateAge, minimumAgeFor } from '../lib/age';
 import { formatReleaseDate } from '../lib/date';
 import './MediaPage.css';
+import { CommentsList } from '../components/CommentsList';
 
 export function MediaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,10 +36,9 @@ export function MediaDetailPage() {
   const [allGenres, setAllGenres] = useState<Genre[]>([]);
   const navigate = useNavigate();
   
-  // Reusing Auth state matching HomePage pattern
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   
-  // Inline Editor Panel UI States
+  
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editDescription, setEditDescription] = useState('');
@@ -634,6 +634,8 @@ export function MediaDetailPage() {
 
           {playError && (
             <p className="detail-age-restriction-notice">{playError}</p>)}
+
+          <CommentsList mediaId={id!} />
 
           {watchlistNotice && (
             <p className="detail-age-restriction-notice">{watchlistNotice}</p>

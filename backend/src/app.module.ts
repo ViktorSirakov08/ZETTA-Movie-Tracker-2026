@@ -19,6 +19,7 @@ import { Episode } from './media/entity/episode.entity';
 import { Season } from './media/entity/season.entity';
 import { Genre } from './media/entity/genre.entity';
 import { MediaWatchStatus } from './media/entity/media-watch-status.entity';
+import { Comment } from './media/entity/comments.entity';
 import { EpisodeWatchStatus } from './media/entity/episode-watch-status.entity';
 import { SeasonWatchStatus } from './media/entity/season-watch-status.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
@@ -48,6 +49,7 @@ import { RefreshToken } from './auth/entities/refresh-token.entity';
           Season,
           Genre,
           MediaWatchStatus,
+          Comment,
           EpisodeWatchStatus,
           SeasonWatchStatus,
           RefreshToken,

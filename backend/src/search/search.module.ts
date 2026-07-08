@@ -9,7 +9,7 @@ import { MediaSearchService } from './media-search.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        node: configService.getOrThrow<string>('ELASTICSEARCH_NODE'),
+        node: configService.get<string>('ELASTICSEARCH_NODE', 'http://localhost:9200'),
       }),
     }),
   ],

@@ -77,8 +77,6 @@ export function HomePage() {
     });
   }, [token]);
 
-  // The search index stores genre/interest names, not ids, so the id picked
-  // in the dropdown has to be resolved to a name before it's sent to /media/search.
   const selectedGenreName = useMemo(() => {
     if (selectedGenreId === 'All') return undefined;
     return genres.find((genre) => genre.id === selectedGenreId)?.name;
@@ -129,7 +127,7 @@ export function HomePage() {
           Watchlist
         </Link>
 
-        {/* Grouping the search and filter elements together */}
+        
         <div className="center-controls">
           <label className="search-shell" aria-label="Search media">
             <span className="search-icon" aria-hidden="true">
