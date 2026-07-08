@@ -4,7 +4,7 @@ import { setWatchStatus, getWatchStatus } from '../api/media';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media, Season } from '../types/media';
-import { rateMedia, getUserRating } from '../api/ratings';
+import { rateMedia, getUserRating, removeRating } from '../api/ratings';
 import { updateMedia, deleteMedia, addEpisode } from '../api/media';
 import {
   fetchSeasons,
@@ -30,6 +30,7 @@ export function MediaDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [watchStatus, setWatchStatusState] = useState<string>('NOT_WATCHED');
   const [userRating, setUserRating] = useState<number | null>(null);
+  const [isRemovingRating, setIsRemovingRating] = useState(false);
   const [editAgeRestriction, setEditAgeRestriction] = useState<'NONE' | 'PG13' | 'PG18'>('NONE');
   const [editDurationMinutes, setEditDurationMinutes] = useState('');
   const [editGenreIds, setEditGenreIds] = useState<string[]>([]);
@@ -150,6 +151,23 @@ export function MediaDetailPage() {
     await rateMedia(token, id, value);
     setUserRating(value);
     fetchMediaById(id).then(setMedia);
+  }
+
+  async function handleRemoveRating() {
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
+
+    setIsRemovingRating(true);
+    try {
+      await removeRating(token, id);
+      setUserRating(null);
+      await fetchMediaById(id).then(setMedia);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error removing rating.');
+    } finally {
+      setIsRemovingRating(false);
+    }
   }
 
   async function handleSaveChanges(e: React.FormEvent) {
@@ -363,6 +381,18 @@ export function MediaDetailPage() {
                         ★
                         </button>
                     ))}
+                </div>
+                <div className="remove-rating-button">
+                  {userRating !== null && (
+                      <button 
+                        type="button" 
+                        className="remove-rating-link" 
+                        onClick={handleRemoveRating}
+                        disabled={isRemovingRating}
+                      >
+                        {isRemovingRating ? 'Removing...' : 'Remove Rating'}
+                      </button>
+                    )}
                 </div>
             </div>
           </div>

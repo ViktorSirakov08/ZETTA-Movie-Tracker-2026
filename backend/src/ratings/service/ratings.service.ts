@@ -36,6 +36,11 @@ export class RatingsService {
     return rating?.value ?? null;
   }
 
+  async removeRating(userId: string, mediaId: string): Promise<void> {
+    await this.ratingRepo.delete({ userId, mediaId });
+    await this.recomputeMediaRating(mediaId);
+  }
+
   private async recomputeMediaRating(mediaId: string): Promise<void> {
   const result = await this.ratingRepo
     .createQueryBuilder('r')
