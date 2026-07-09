@@ -28,8 +28,39 @@ const typeFilters: { value: TypeFilter; label: string }[] = [
   { value: 'SERIES', label: 'Series' },
 ];
 
+// The "back" link on the media detail page just navigates to /home rather
+// than going back in browser history, so filter state has nowhere to
+// survive unless we persist it ourselves. sessionStorage keeps it for the
+// tab's lifetime without leaking across separate sessions/devices.
+const HOME_FILTERS_KEY = 'movietracker_home_filters';
+
+interface HomeFilters {
+  query: string;
+  selectedCategory: Category;
+  selectedGenreId: string;
+  selectedType: TypeFilter;
+  searchByInterests: boolean;
+}
+
+function loadStoredFilters(): HomeFilters {
+  const defaults: HomeFilters = {
+    query: '',
+    selectedCategory: 'Newest',
+    selectedGenreId: 'All',
+    selectedType: 'All',
+    searchByInterests: false,
+  };
+  try {
+    const raw = sessionStorage.getItem(HOME_FILTERS_KEY);
+    return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+  } catch {
+    return defaults;
+  }
+}
+
 export function HomePage({ theme, onThemeChange }: HomePageProps) {
   const token = getToken();
+  const initialFilters = loadStoredFilters();
 
   const [media, setMedia] = useState<Media[]>([]);
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -38,12 +69,19 @@ export function HomePage({ theme, onThemeChange }: HomePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [query, setQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Category>('Newest');
-  const [selectedGenreId, setSelectedGenreId] = useState<string>('All');
-  const [selectedType, setSelectedType] = useState<TypeFilter>('All');
-  const [searchByInterests, setSearchByInterests] = useState(false);
+  const [query, setQuery] = useState(initialFilters.query);
+  const [selectedCategory, setSelectedCategory] = useState<Category>(initialFilters.selectedCategory);
+  const [selectedGenreId, setSelectedGenreId] = useState<string>(initialFilters.selectedGenreId);
+  const [selectedType, setSelectedType] = useState<TypeFilter>(initialFilters.selectedType);
+  const [searchByInterests, setSearchByInterests] = useState(initialFilters.searchByInterests);
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      HOME_FILTERS_KEY,
+      JSON.stringify({ query, selectedCategory, selectedGenreId, selectedType, searchByInterests }),
+    );
+  }, [query, selectedCategory, selectedGenreId, selectedType, searchByInterests]);
 
   useEffect(() => {
     if (!token) return;
