@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getValidAccessToken } from '../lib/session';
 import { setWatchStatus, getWatchStatus } from '../api/media';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media, Season } from '../types/media';
 import { rateMedia, getUserRating, removeRating } from '../api/ratings';
@@ -352,9 +352,9 @@ export function MediaDetailPage() {
 
   return (
     <main className="media-detail-page">
-      <Link to="/home" className="back-link">
+      <button type="button" className="back-link" onClick={() => navigate(-1)}>
         ← Back
-      </Link>
+      </button>
 
       <div className="detail-layout">
         <div className="detail-poster">
