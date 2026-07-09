@@ -362,3 +362,8 @@
 .form-panel-buttons .action-button--danger {
   margin-left: auto;
 }
+
+:root[data-theme='dark'] .user-rating-stars + button,
+:root[data-theme='dark'] .rating-block button {
+  color: #fff;
+}
