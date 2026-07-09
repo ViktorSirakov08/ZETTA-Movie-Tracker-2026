@@ -352,8 +352,9 @@ export class MediaService {
   }
 
   // The series itself is "watched" only once every one of its seasons is.
-  // Mirrors recomputeSeasonWatchStatus one level up, and can also revert an
-  // already-WATCHED series back to WATCHING if new content invalidates it.
+  // If it isn't fully watched but at least one episode is, it's WATCHING —
+  // that covers both starting a series fresh and an already-WATCHED series
+  // being reverted once new content invalidates it.
   private async recomputeMediaWatchStatusFromSeasons(
     userId: string,
     mediaId: string,
@@ -373,8 +374,21 @@ export class MediaService {
 
     if (allSeasonsWatched) {
       entry.status = WatchStatus.WATCHED;
-    } else if (entry.status === WatchStatus.WATCHED) {
-      entry.status = WatchStatus.WATCHING;
+    } else {
+      const episodes = await this.episodeRepo.find({ where: { mediaId } });
+      const watchedEpisodeRows =
+        episodes.length > 0
+          ? await this.episodeWatchStatusRepo.find({
+              where: {
+                userId,
+                episodeId: In(episodes.map((e) => e.id)),
+                watched: true,
+              },
+            })
+          : [];
+      if (watchedEpisodeRows.length > 0) {
+        entry.status = WatchStatus.WATCHING;
+      }
     }
     await this.watchStatusRepo.save(entry);
   }
@@ -440,6 +454,57 @@ export class MediaService {
     entry.status = status;
 
     await this.watchStatusRepo.save(entry);
+
+    // Marking (or unmarking) a series directly, rather than episode-by-
+    // episode, would otherwise leave every episode/season row out of sync
+    // with the top-level status — push the change down both ways round.
+    if (media.type === MediaType.SERIES) {
+      if (status === WatchStatus.WATCHED) {
+        await this.setSeriesEpisodesWatched(userId, mediaId, true);
+      } else if (status === WatchStatus.NOT_WATCHED) {
+        await this.setSeriesEpisodesWatched(userId, mediaId, false);
+      }
+    }
+  }
+
+  private async setSeriesEpisodesWatched(
+    userId: string,
+    mediaId: string,
+    watched: boolean,
+  ): Promise<void> {
+    const episodes = await this.episodeRepo.find({ where: { mediaId } });
+    if (episodes.length > 0) {
+      const existing = await this.episodeWatchStatusRepo.find({
+        where: { userId, episodeId: In(episodes.map((e) => e.id)) },
+      });
+      const existingByEpisodeId = new Map(
+        existing.map((e) => [e.episodeId, e]),
+      );
+
+      const rows = episodes.map(
+        (episode) =>
+          existingByEpisodeId.get(episode.id) ??
+          this.episodeWatchStatusRepo.create({ userId, episodeId: episode.id }),
+      );
+      rows.forEach((row) => (row.watched = watched));
+      await this.episodeWatchStatusRepo.save(rows);
+    }
+
+    const seasons = await this.seasonRepo.find({ where: { mediaId } });
+    if (seasons.length > 0) {
+      const existing = await this.seasonWatchStatusRepo.find({
+        where: { userId, seasonId: In(seasons.map((s) => s.id)) },
+      });
+      const existingBySeasonId = new Map(existing.map((s) => [s.seasonId, s]));
+
+      const rows = seasons.map(
+        (season) =>
+          existingBySeasonId.get(season.id) ??
+          this.seasonWatchStatusRepo.create({ userId, seasonId: season.id }),
+      );
+      rows.forEach((row) => (row.watched = watched));
+      await this.seasonWatchStatusRepo.save(rows);
+    }
   }
 
   async search(params: {

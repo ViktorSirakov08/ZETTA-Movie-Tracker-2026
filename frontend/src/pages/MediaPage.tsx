@@ -143,6 +143,13 @@ export function MediaDetailPage() {
       if (!token) return;
       await setWatchStatus(token, id, status);
       setWatchStatusState(status);
+
+      // Marking/unmarking a series at the top level cascades to every
+      // episode and season on the backend — re-pull so the per-episode
+      // buttons reflect that instead of showing stale state.
+      if (media?.type === 'SERIES') {
+        await refreshSeasonsAndEpisodes();
+      }
   }
 
   async function handleRate(value: number) {
