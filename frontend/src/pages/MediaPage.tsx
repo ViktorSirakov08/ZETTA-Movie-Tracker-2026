@@ -1,14 +1,20 @@
+
 import { useEffect, useState } from 'react';
 import { getValidAccessToken } from '../lib/session';
-import { setWatchStatus, getWatchStatus } from '../api/media';
+import {
+  setWatchStatus,
+  getWatchStatus,
+  updateMedia,
+  deleteMedia,
+} from '../api/media';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media, Season } from '../types/media';
 import { rateMedia, getUserRating } from '../api/ratings';
-import { updateMedia, deleteMedia, addEpisode } from '../api/media';
 import {
   fetchSeasons,
   addSeason,
+  addEpisode,
   getEpisodeWatchStatuses,
   getSeasonWatchStatuses,
   setEpisodeWatchStatus,
@@ -344,26 +350,35 @@ export function MediaDetailPage() {
                 {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
             </span>
                 <div className="user-rating-stars" role="radiogroup" aria-label="Your rating">
-                    <button
-                        type="button"
-                        className={userRating === 0 ? 'star star--filled' : 'star star--zero'}
-                        onClick={() => handleRate(0)}
-                        aria-label="Clear rating"
-                    >
-                        ✕
-                    </button>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                        key={star}
-                        type="button"
-                        className={userRating !== null && star <= userRating ? 'star star--filled' : 'star'}
-                        onClick={() => handleRate(star)}
-                        aria-label={`Rate ${star} stars`}
-                        >
-                        ★
-                        </button>
-                    ))}
-                </div>
+  <button
+    type="button"
+    className={userRating === 0 ? 'star star--filled' : 'star star--zero'}
+    onClick={() => handleRate(0)}
+    aria-label="Clear rating"
+  >
+    ✕
+  </button>
+
+  {[1, 2, 3, 4, 5].map((star) => (
+    <button
+      key={star}
+      type="button"
+      className={userRating !== null && star <= userRating ? 'star star--filled' : 'star'}
+      onClick={() => handleRate(star)}
+      aria-label={`Rate ${star} stars`}
+    >
+      ★
+    </button>
+  ))}
+</div>
+
+<button
+  type="button"
+  className="remove-rating-button"
+  onClick={() => handleRate(0)}
+>
+  Remove Rating
+</button>
             </div>
           </div>
 

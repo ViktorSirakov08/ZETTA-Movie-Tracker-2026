@@ -352,26 +352,61 @@
   color: rgba(241, 244, 235, 0.82);
 }
 
+/* Add to Watchlist / Mark as Watched buttons */
+:root[data-theme='dark'] .detail-actions .action-button:not(.action-button--primary):not(.action-button--danger) {
+  color: #000 !important;
+}
+
+:root[data-theme='dark'] .detail-actions .action-button:not(.action-button--primary):not(.action-button--danger):disabled {
+  color: #000 !important;
+  opacity: 1;
+}
+
+/* Green primary buttons stay white */
+:root[data-theme='dark'] .action-button--primary {
+  color: #fff !important;
+}
+
+/* Delete button stays white */
+:root[data-theme='dark'] .action-button--danger {
+  color: #fff !important;
+}
+
+/* Rating stars */
 :root[data-theme='dark'] .star {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.75) !important;
 }
 
 :root[data-theme='dark'] .star--filled {
-  color: var(--sage-dark);
+  color: var(--sage-dark) !important;
 }
 
-:root[data-theme='dark'] .star--zero {
-  color: #fff;
-}
-
+/* X / clear rating button */
+:root[data-theme='dark'] .star--zero,
 :root[data-theme='dark'] .user-rating-stars button:first-child {
-  color: #fff;
+  color: #fff !important;
 }
 
-:root[data-theme='dark'] .action-button {
-  color: #000;
+/* Remove Rating text */
+:root[data-theme='dark'] .remove-rating-button,
+:root[data-theme='dark'] .rating-block .rate-button,
+:root[data-theme='dark'] .rating-block a,
+:root[data-theme='dark'] .rating-block button:not(.star) {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.75);
 }
 
-:root[data-theme='dark'] .action-button--primary {
-  color: #fff;
+.remove-rating-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--sage-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+:root[data-theme='dark'] .remove-rating-button {
+  color: #fff !important;
 }
