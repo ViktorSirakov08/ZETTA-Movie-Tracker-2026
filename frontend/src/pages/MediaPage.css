@@ -273,16 +273,6 @@
   color: var(--sage-dark);
 }
 
-@media (max-width: 800px) {
-  .detail-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-poster {
-    min-height: 320px;
-  }
-}
-
 .edit-media-panel {
   margin-top: 24px;
   padding: 24px;
@@ -310,6 +300,17 @@
 .action-button--danger:hover {
   background: #cc2a36;
   opacity: 1;
+}
+
+.remove-rating-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--sage-dark);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .remove-rating-link {
@@ -367,33 +368,37 @@
   margin-left: auto;
 }
 
-:root[data-theme='dark'] .user-rating-stars + button,
-:root[data-theme='dark'] .rating-block button {
+@media (max-width: 800px) {
+  .detail-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-poster {
+    min-height: 320px;
+  }
+}
+
 :root[data-theme='dark'] .detail-description {
   color: rgba(241, 244, 235, 0.82);
 }
 
-/* Add to Watchlist / Mark as Watched buttons */
 :root[data-theme='dark'] .detail-actions .action-button:not(.action-button--primary):not(.action-button--danger) {
-  color: #000 !important;
+  color: #000000 !important;
 }
 
 :root[data-theme='dark'] .detail-actions .action-button:not(.action-button--primary):not(.action-button--danger):disabled {
-  color: #000 !important;
+  color: #000000 !important;
   opacity: 1;
 }
 
-/* Green primary buttons stay white */
 :root[data-theme='dark'] .action-button--primary {
-  color: #fff !important;
+  color: #ffffff !important;
 }
 
-/* Delete button stays white */
 :root[data-theme='dark'] .action-button--danger {
-  color: #fff !important;
+  color: #ffffff !important;
 }
 
-/* Rating stars */
 :root[data-theme='dark'] .star {
   color: rgba(255, 255, 255, 0.75) !important;
 }
@@ -402,33 +407,15 @@
   color: var(--sage-dark) !important;
 }
 
-/* X / clear rating button */
 :root[data-theme='dark'] .star--zero,
 :root[data-theme='dark'] .user-rating-stars button:first-child {
-  color: #fff !important;
+  color: #ffffff !important;
 }
 
-/* Remove Rating text */
 :root[data-theme='dark'] .remove-rating-button,
+:root[data-theme='dark'] .remove-rating-link,
 :root[data-theme='dark'] .rating-block .rate-button,
-:root[data-theme='dark'] .rating-block a,
 :root[data-theme='dark'] .rating-block button:not(.star) {
-  color: #fff !important;
+  color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.75);
-}
-
-.remove-rating-button {
-  background: transparent;
-  border: none;
-  padding: 0;
-  color: var(--sage-dark);
-  font-weight: 600;
-  font-size: 0.9rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-:root[data-theme='dark'] .action-button--primary {
-  color: #fff;
-}
 }

@@ -6,7 +6,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media, Season } from '../types/media';
 import { rateMedia, getUserRating, removeRating } from '../api/ratings';
-import { updateMedia, deleteMedia, addEpisode } from '../api/media';
+import { updateMedia, deleteMedia } from '../api/media';
 import {
   fetchSeasons,
   addSeason,
