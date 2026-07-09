@@ -14,6 +14,12 @@ import type { Genre } from '../types/genre';
 
 type Category = 'Newest' | 'Highest Rated';
 type TypeFilter = 'All' | 'MOVIE' | 'SERIES';
+type Theme = 'light' | 'dark';
+
+type HomePageProps = {
+  theme: Theme;
+  onThemeChange: (theme: Theme) => void;
+};
 
 const categories: Category[] = ['Newest', 'Highest Rated'];
 const typeFilters: { value: TypeFilter; label: string }[] = [
@@ -22,7 +28,7 @@ const typeFilters: { value: TypeFilter; label: string }[] = [
   { value: 'SERIES', label: 'Series' },
 ];
 
-export function HomePage() {
+export function HomePage({ theme, onThemeChange }: HomePageProps) {
   const token = getToken();
 
   const [media, setMedia] = useState<Media[]>([]);
@@ -240,11 +246,39 @@ export function HomePage() {
           </aside>
         </div>
 
-        {currentUser?.role === 'admin' && (
-          <Link to="/media/add" className="add-media-button">
-            Add Media
-          </Link>
-        )}
+        <div className="top-actions">
+  <div className="theme-toggle" aria-label="Theme switcher">
+    <button
+      type="button"
+      className={
+        theme === 'light'
+          ? 'theme-toggle-button theme-toggle-button--active'
+          : 'theme-toggle-button'
+      }
+      onClick={() => onThemeChange('light')}
+    >
+      Light
+    </button>
+
+    <button
+      type="button"
+      className={
+        theme === 'dark'
+          ? 'theme-toggle-button theme-toggle-button--active'
+          : 'theme-toggle-button'
+      }
+      onClick={() => onThemeChange('dark')}
+    >
+      Dark
+    </button>
+  </div>
+
+  {currentUser?.role === 'admin' && (
+    <Link to="/media/add" className="add-media-button">
+      Add Media
+    </Link>
+  )}
+</div>
       </header>
 
       <section className="media-stage" aria-label="Media blocks">
