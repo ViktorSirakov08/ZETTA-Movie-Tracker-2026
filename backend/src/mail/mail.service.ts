@@ -101,12 +101,21 @@ export class MailService {
 
     socket.on('data', (chunk: string) => {
       buffer += chunk;
-      if (!buffer.endsWith('\n')) return;
 
-      const line = buffer;
-      buffer = '';
-      const resolve = pending.shift();
-      if (resolve) resolve(line);
+      let newlineIndex: number;
+      while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+        const line = buffer.slice(0, newlineIndex + 1);
+        buffer = buffer.slice(newlineIndex + 1);
+
+        // Multi-line SMTP replies mark continuation lines with "250-" and
+        // the final line with "250 " (space). Real servers split EHLO's
+        // capability list across several lines; resolving on the first one
+        // would desync every command that follows.
+        if (/^\d{3}-/.test(line)) continue;
+
+        const resolve = pending.shift();
+        if (resolve) resolve(line);
+      }
     });
 
     const read = () =>
