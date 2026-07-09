@@ -363,6 +363,8 @@
   margin-left: auto;
 }
 
+:root[data-theme='dark'] .user-rating-stars + button,
+:root[data-theme='dark'] .rating-block button {
 :root[data-theme='dark'] .detail-description {
   color: rgba(241, 244, 235, 0.82);
 }
