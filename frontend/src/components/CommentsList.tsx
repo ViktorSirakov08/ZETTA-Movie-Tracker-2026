@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react';
-import { fetchComments } from '../api/comments';
+import { fetchComments, deleteComment } from '../api/comments';
 import type { Comment } from '../types/comment';
 import { CommentForm } from './CommentForm';
+import { getStoredUser } from '../lib/auth-storage';
+import { getValidAccessToken } from '../lib/session';
 import './CommentsList.css';
 
 export function CommentsList({ mediaId }: { mediaId: string }) {
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const currentUserId = getStoredUser()?.id ?? null;
 
   async function load() {
     setError(null);
@@ -26,6 +31,20 @@ export function CommentsList({ mediaId }: { mediaId: string }) {
       setError(friendly);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDelete(commentId: string) {
+    setError(null);
+    setDeletingId(commentId);
+    try {
+      const token = await getValidAccessToken();
+      await deleteComment(token, mediaId, commentId);
+      setComments((prev) => prev?.filter((c) => c.id !== commentId) ?? prev);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete comment.');
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -48,6 +67,16 @@ export function CommentsList({ mediaId }: { mediaId: string }) {
               <div className="comment-meta">
                 <strong>{c.user?.username ?? 'Unknown'}</strong>
                 <span className="comment-date">{new Date(c.createdAt).toLocaleString()}</span>
+                {currentUserId && c.userId === currentUserId && (
+                  <button
+                    type="button"
+                    className="comment-delete-btn"
+                    onClick={() => handleDelete(c.id)}
+                    disabled={deletingId === c.id}
+                  >
+                    {deletingId === c.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                )}
               </div>
               <div className="comment-body">{c.content}</div>
             </li>

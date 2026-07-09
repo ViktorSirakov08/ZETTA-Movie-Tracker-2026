@@ -50,18 +50,6 @@ function readMultiSelectValues(event: ChangeEvent<HTMLSelectElement>): string[] 
   return Array.from(event.target.selectedOptions, (option) => option.value);
 }
 
-function getTodayIsoDate(): string {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function isFutureDate(dateStr: string): boolean {
-  return dateStr > getTodayIsoDate();
-}
-
 export function AddMediaPage() {
   const token = getToken();
   const navigate = useNavigate();
@@ -210,8 +198,8 @@ export function AddMediaPage() {
       return;
     }
 
-    if (isFutureDate(releaseDate)) {
-      setError('Release date cannot be in the future.');
+    if (isBeyondAllowedRange(releaseDate)) {
+      setError('Release date can be at most 6 months from now.');
       return;
     }
 
@@ -284,6 +272,19 @@ export function AddMediaPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function getMaxAllowedReleaseDate(): string {
+    const max = new Date();
+    max.setMonth(max.getMonth() + 6);
+    const year = max.getFullYear();
+    const month = String(max.getMonth() + 1).padStart(2, '0');
+    const day = String(max.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function isBeyondAllowedRange(dateStr: string): boolean {
+    return dateStr > getMaxAllowedReleaseDate();
   }
 
   return (
@@ -377,7 +378,7 @@ export function AddMediaPage() {
               <input
                 id="release-date"
                 type="date"
-                max={getTodayIsoDate()}
+                max={getMaxAllowedReleaseDate()}
                 value={releaseDate}
                 onChange={(e) => setReleaseDate(e.target.value)}
                 required
