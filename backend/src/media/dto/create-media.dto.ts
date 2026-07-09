@@ -23,7 +23,7 @@ export class CreateMediaDto {
   name!: string;
 
   @IsDateString()
-  @IsNotFutureDate()
+  @IsNotFutureDate(6)
   releaseDate!: string;
 
   @IsString()

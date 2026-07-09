@@ -64,9 +64,6 @@ export function HomePage({ theme, onThemeChange }: HomePageProps) {
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
 
-      // Best-effort — if this fails, the home page just shows everything
-      // (including already-watched/in-progress/planned items) rather than
-      // breaking entirely. Home is meant to surface only NOT_WATCHED media.
       Promise.all([
         getWatchHistory(validToken),
         getCurrentlyWatching(validToken),
@@ -133,7 +130,6 @@ export function HomePage({ theme, onThemeChange }: HomePageProps) {
           Watchlist
         </Link>
 
-        
         <div className="center-controls">
           <label className="search-shell" aria-label="Search media">
             <span className="search-icon" aria-hidden="true">
@@ -247,38 +243,38 @@ export function HomePage({ theme, onThemeChange }: HomePageProps) {
         </div>
 
         <div className="top-actions">
-  <div className="theme-toggle" aria-label="Theme switcher">
-    <button
-      type="button"
-      className={
-        theme === 'light'
-          ? 'theme-toggle-button theme-toggle-button--active'
-          : 'theme-toggle-button'
-      }
-      onClick={() => onThemeChange('light')}
-    >
-      Light
-    </button>
+          <div className="theme-toggle" aria-label="Theme switcher">
+            <button
+              type="button"
+              className={
+                theme === 'light'
+                  ? 'theme-toggle-button theme-toggle-button--active'
+                  : 'theme-toggle-button'
+              }
+              onClick={() => onThemeChange('light')}
+            >
+              Light
+            </button>
 
-    <button
-      type="button"
-      className={
-        theme === 'dark'
-          ? 'theme-toggle-button theme-toggle-button--active'
-          : 'theme-toggle-button'
-      }
-      onClick={() => onThemeChange('dark')}
-    >
-      Dark
-    </button>
-  </div>
+            <button
+              type="button"
+              className={
+                theme === 'dark'
+                  ? 'theme-toggle-button theme-toggle-button--active'
+                  : 'theme-toggle-button'
+              }
+              onClick={() => onThemeChange('dark')}
+            >
+              Dark
+            </button>
+          </div>
 
-  {currentUser?.role === 'admin' && (
-    <Link to="/media/add" className="add-media-button">
-      Add Media
-    </Link>
-  )}
-</div>
+          {currentUser?.role === 'admin' && (
+            <Link to="/media/add" className="add-media-button">
+              Add Media
+            </Link>
+          )}
+        </div>
       </header>
 
       <section className="media-stage" aria-label="Media blocks">
@@ -289,38 +285,46 @@ export function HomePage({ theme, onThemeChange }: HomePageProps) {
         )}
 
         <div className="media-grid">
-          {filteredMedia.map((item) => (
-            <article className="media-card" key={item.id}>
-              <Link to={`/media/${item.id}`} className="media-card-link" key={item.id}>
-                <div className="media-poster">
-                  {item.posterUrl ? (
-                    <img src={item.posterUrl} alt={item.name} />
-                  ) : (
-                    <span className="poster-label">Picture</span>
-                  )}
-                </div>
-              </Link>
-              <div className="media-copy">
-                <div className="media-head">
-                  <h2>{item.name}</h2>
-                  <span className="media-rating">
-                    {item.rating !== null ? item.rating.toFixed(1) : 'No Rating'}
-                  </span>
-                </div>
-                <p className="release-year">
-                  Released {formatReleaseDate(item.releaseDate)}
-                </p>
-                <p>{item.description}</p>
-                <div className="genre-row" aria-label="Genres">
-                  {item.genres.map((genre) => (
-                    <span className="genre-pill" key={genre.id}>
-                      {formatGenreLabel(genre.name)}
+          {filteredMedia.map((item) => {
+            const isUnreleased = new Date(item.releaseDate) > new Date();
+
+            return (
+              <article className="media-card" key={item.id}>
+                <Link to={`/media/${item.id}`} className="media-card-link">
+                  <div className={`media-poster ${isUnreleased ? 'media-poster--blurred' : ''}`}>
+                    {item.posterUrl ? (
+                      <img src={item.posterUrl} alt={item.name} />
+                    ) : (
+                      <span className="poster-label">Picture</span>
+                    )}
+                    {isUnreleased && (
+                      <div className="unreleased-overlay-badge">Coming Soon</div>
+                    )}
+                  </div>
+                </Link>
+                <div className="media-copy">
+                  <div className="media-head">
+                    <h2>{item.name}</h2>
+                    <span className="media-rating">
+                      {item.rating !== null ? item.rating.toFixed(1) : 'No Rating'}
                     </span>
-                  ))}
+                  </div>
+                  <p className="release-year">
+                    {isUnreleased && `Releases ${formatReleaseDate(item.releaseDate)}`}
+                    {!isUnreleased && `Released ${formatReleaseDate(item.releaseDate)}`}
+                  </p>
+                  <p>{item.description}</p>
+                  <div className="genre-row" aria-label="Genres">
+                    {item.genres.map((genre) => (
+                      <span className="genre-pill" key={genre.id}>
+                        {formatGenreLabel(genre.name)}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       </section>
     </main>

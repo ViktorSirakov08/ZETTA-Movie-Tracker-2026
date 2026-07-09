@@ -130,6 +130,7 @@ export function MediaDetailPage() {
   }
 
   const requiredAge = media ? minimumAgeFor(media.ageRestriction) : 0;
+  const isUnreleased = media ? new Date(formatReleaseDate(media.releaseDate)) > new Date() : false;
   const canWatch =
     requiredAge === 0 ||
     (viewerDateOfBirth !== null && calculateAge(viewerDateOfBirth) >= requiredAge);
@@ -200,6 +201,10 @@ export function MediaDetailPage() {
         setPlayError(`This title is restricted to viewers ${requiredAge}+.`);
         return;
       }
+      if (isUnreleased) {
+        setPlayError('This title has not been released yet.');
+        return;
+      }
       setPlayError(null);
       updateStatus('WATCHING')
         .then(() => {
@@ -214,6 +219,9 @@ export function MediaDetailPage() {
   }
 
   function handleAddToWatchlist() {
+    setPlayError(null);
+    setWatchlistNotice(null);
+    
     const nextState = watchStatus !== 'PLANNED_TO_WATCH';
 
     if (nextState) {
@@ -233,8 +241,11 @@ export function MediaDetailPage() {
 
   function handleMarkAsWatched() {
     const nextState = watchStatus !== 'WATCHED';
-
-    if (nextState) {
+    if (isUnreleased) {
+        setPlayError('This title has not been released yet.');
+        return;
+      }
+    if (nextState && canWatch) {
         updateStatus('WATCHED');
     } else {
         updateStatus('NOT_WATCHED');
@@ -357,10 +368,11 @@ export function MediaDetailPage() {
                 {media.ageRestriction !== 'NONE' ? ` · ${media.ageRestriction === 'PG13' ? '13+' : '18+'}` : ''}
               </p>
             </div>
-            <div className="rating-block">
-            <span className="detail-rating">
-                {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
-            </span>
+            {!isUnreleased && (
+              <div className="rating-block">
+                <span className="detail-rating">
+                  {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
+                </span>
                 <div className="user-rating-stars" role="radiogroup" aria-label="Your rating">
                     <button
                         type="button"
@@ -394,7 +406,7 @@ export function MediaDetailPage() {
                       </button>
                     )}
                 </div>
-            </div>
+            </div>)}
           </div>
 
           <div className="genre-row" aria-label="Genres">
