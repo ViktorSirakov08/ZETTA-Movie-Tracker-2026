@@ -18,6 +18,12 @@ export class User {
   @Column({ unique: true })
   username: string;
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  email: string | null;
+
+  @Column({ name: 'email_verified', default: false })
+  emailVerified: boolean;
+
   @Column()
   @Exclude()
   password: string;
