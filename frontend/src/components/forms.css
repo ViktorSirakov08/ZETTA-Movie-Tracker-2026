@@ -370,3 +370,32 @@
 .auth-switch a:hover {
   text-decoration: underline;
 }
+
+:root[data-theme='dark'] .field input,
+:root[data-theme='dark'] .field textarea,
+:root[data-theme='dark'] .field select {
+  background: #000;
+  color: #fff;
+  border-color: rgba(207, 226, 198, 0.35);
+}
+
+:root[data-theme='dark'] .field input:focus,
+:root[data-theme='dark'] .field textarea:focus,
+:root[data-theme='dark'] .field select:focus {
+  background: #000;
+  color: #fff;
+  border-color: var(--color-sage-dark);
+}
+
+:root[data-theme='dark'] .field input::placeholder,
+:root[data-theme='dark'] .field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme='dark'] input:-webkit-autofill,
+:root[data-theme='dark'] input:-webkit-autofill:hover,
+:root[data-theme='dark'] input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  box-shadow: 0 0 0 1000px #000 inset;
+  caret-color: #fff;
+}

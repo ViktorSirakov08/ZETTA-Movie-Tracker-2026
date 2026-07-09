@@ -127,7 +127,7 @@
 
 .detail-description {
   line-height: 1.6;
-  color: rgba(43, 46, 40, 0.78);
+  color: var(--color-text-muted);
   font-size: 1rem;
 }
 
@@ -361,4 +361,32 @@
 
 .form-panel-buttons .action-button--danger {
   margin-left: auto;
+}
+
+:root[data-theme='dark'] .detail-description {
+  color: rgba(241, 244, 235, 0.82);
+}
+
+:root[data-theme='dark'] .star {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+:root[data-theme='dark'] .star--filled {
+  color: var(--sage-dark);
+}
+
+:root[data-theme='dark'] .star--zero {
+  color: #fff;
+}
+
+:root[data-theme='dark'] .user-rating-stars button:first-child {
+  color: #fff;
+}
+
+:root[data-theme='dark'] .action-button {
+  color: #000;
+}
+
+:root[data-theme='dark'] .action-button--primary {
+  color: #fff;
 }
