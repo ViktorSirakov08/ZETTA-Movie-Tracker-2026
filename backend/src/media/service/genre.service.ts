@@ -1,6 +1,6 @@
 import { Injectable, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Genre } from '../entity/genre.entity';
 import { CreateGenreDto } from '../dto/create-genre.dto';
 
@@ -16,8 +16,11 @@ export class GenreService {
   }
 
   async create(dto: CreateGenreDto): Promise<Genre> {
+    // Case-insensitive, otherwise "Comedy" and "comedy" both pass the DB's
+    // unique constraint (case-sensitive) and end up as two indistinguishable
+    // dropdown entries that silently filter against different media.
     const existing = await this.genreRepo.findOne({
-      where: { name: dto.name },
+      where: { name: ILike(dto.name) },
     });
     if (existing) {
       throw new ConflictException(`Genre "${dto.name}" already exists`);
