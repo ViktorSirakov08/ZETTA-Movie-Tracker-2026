@@ -14,6 +14,10 @@
   color: var(--sage-dark);
   font-weight: 600;
   text-decoration: none;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .back-link:hover {
@@ -308,6 +312,21 @@
   opacity: 1;
 }
 
+.remove-rating-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: rgba(43, 46, 40, 0.55);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.remove-rating-link:hover {
+  color: var(--sage-dark);
+}
+
 .form-field {
   display: flex;
   flex-direction: column;
@@ -348,6 +367,8 @@
   margin-left: auto;
 }
 
+:root[data-theme='dark'] .user-rating-stars + button,
+:root[data-theme='dark'] .rating-block button {
 :root[data-theme='dark'] .detail-description {
   color: rgba(241, 244, 235, 0.82);
 }
@@ -407,6 +428,7 @@
   cursor: pointer;
 }
 
-:root[data-theme='dark'] .remove-rating-button {
-  color: #fff !important;
+:root[data-theme='dark'] .action-button--primary {
+  color: #fff;
+}
 }

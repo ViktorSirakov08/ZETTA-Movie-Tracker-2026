@@ -25,7 +25,7 @@ export class UpdateMediaDto {
 
   @IsOptional()
   @IsDateString()
-  @IsNotFutureDate()
+  @IsNotFutureDate(6)
   releaseDate?: string;
 
   @IsOptional()

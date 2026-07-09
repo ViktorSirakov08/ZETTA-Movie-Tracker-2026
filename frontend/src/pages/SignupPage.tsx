@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
 import { PasswordInput } from '../components/PasswordInput';
 import { InterestPicker } from '../components/InterestPicker';
 import '../components/forms.css';
-import { loginUser, registerUser } from '../api/auth';
+import { registerUser } from '../api/auth';
 import { ApiError } from '../api/client';
-import { saveSession } from '../lib/auth-storage';
 import { INTERESTS, INTEREST_LABELS } from '../constants/interests';
 
 export function SignupPage() {
-  const navigate = useNavigate();
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
@@ -20,6 +19,7 @@ export function SignupPage() {
     new Set(),
   );
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function toggleInterest(interest: string) {
@@ -37,6 +37,7 @@ export function SignupPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setSuccess(null);
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -47,10 +48,8 @@ export function SignupPage() {
 
     setSubmitting(true);
     try {
-      await registerUser({ username, password, dateOfBirth, interests });
-      const { accessToken, refreshToken, user } = await loginUser({ username, password });
-      saveSession(accessToken, refreshToken, user);
-      navigate('/home');
+      await registerUser({ username, email, password, dateOfBirth, interests });
+      setSuccess('Account created. Check your email to verify your account before logging in.');
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Unable to sign up.');
     } finally {
@@ -68,6 +67,7 @@ export function SignupPage() {
 
       <form className="auth-form" onSubmit={handleSubmit}>
         {error && <div className="form-error-banner">{error}</div>}
+        {success && <div className="form-success-banner">{success}</div>}
 
         <div className="field">
           <label htmlFor="username">Username</label>
@@ -79,6 +79,21 @@ export function SignupPage() {
               placeholder="Choose a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="field">
+          <label htmlFor="email">Email</label>
+          <div className="field-input-wrap">
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>

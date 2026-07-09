@@ -1,13 +1,14 @@
 import {
   registerDecorator,
+  ValidationArguments,
   ValidationOptions,
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
 
-@ValidatorConstraint({ name: 'isNotFutureDate', async: false })
-export class IsNotFutureDateConstraint implements ValidatorConstraintInterface {
-  validate(value: string): boolean {
+@ValidatorConstraint({ name: 'isNotBeyondMaxFutureDate', async: false })
+export class IsNotBeyondMaxFutureDateConstraint implements ValidatorConstraintInterface {
+  validate(value: string, args?: ValidationArguments): boolean {
     if (typeof value !== 'string' || value.length === 0) {
       return false;
     }
@@ -17,25 +18,34 @@ export class IsNotFutureDateConstraint implements ValidatorConstraintInterface {
       return false;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const maxMonthsAhead = (args?.constraints[0] as number) ?? 0;
 
-    return releaseDate <= today;
+    const maxDate = new Date();
+    maxDate.setHours(0, 0, 0, 0);
+    maxDate.setMonth(maxDate.getMonth() + maxMonthsAhead);
+
+    return releaseDate <= maxDate;
   }
 
-  defaultMessage(): string {
-    return 'Release date cannot be in the future';
+  defaultMessage(args?: ValidationArguments): string {
+    const maxMonthsAhead = (args?.constraints[0] as number) ?? 0;
+    return maxMonthsAhead === 0
+      ? 'Release date cannot be in the future'
+      : `Release date cannot be more than ${maxMonthsAhead} months in the future`;
   }
 }
 
-export function IsNotFutureDate(validationOptions?: ValidationOptions) {
+export function IsNotFutureDate(
+  maxMonthsAhead = 0,
+  validationOptions?: ValidationOptions,
+) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName,
       options: validationOptions,
-      constraints: [],
-      validator: IsNotFutureDateConstraint,
+      constraints: [maxMonthsAhead],
+      validator: IsNotBeyondMaxFutureDateConstraint,
     });
   };
 }

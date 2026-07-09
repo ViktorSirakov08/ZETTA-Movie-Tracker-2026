@@ -4,6 +4,8 @@ import { API_BASE_URL, parseResponse } from './client';
 export interface AuthUser {
   id: string;
   username: string;
+  email: string | null;
+  emailVerified: boolean;
   dateOfBirth: string;
   role: 'user' | 'admin';
   interests: Interest[];
@@ -22,6 +24,7 @@ export interface TokenPair {
 
 export function registerUser(data: {
   username: string;
+  email: string;
   password: string;
   dateOfBirth: string;
   interests: Interest[];
@@ -64,6 +67,40 @@ export function logoutUser(refreshToken: string): Promise<void> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
   }).then((res) => parseResponse<void>(res));
+}
+
+export function requestPasswordReset(email: string): Promise<{ message: string }> {
+  return fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  }).then((res) => parseResponse<{ message: string }>(res));
+}
+
+export function resetPassword(data: {
+  token: string;
+  password: string;
+}): Promise<{ message: string }> {
+  return fetch(`${API_BASE_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then((res) => parseResponse<{ message: string }>(res));
+}
+
+export function verifyEmail(token: string): Promise<{ message: string }> {
+  const params = new URLSearchParams({ token });
+  return fetch(`${API_BASE_URL}/auth/verify-email?${params.toString()}`).then((res) =>
+    parseResponse<{ message: string }>(res),
+  );
+}
+
+export function resendVerification(email: string): Promise<{ message: string }> {
+  return fetch(`${API_BASE_URL}/auth/resend-verification`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  }).then((res) => parseResponse<{ message: string }>(res));
 }
 
 export function updateProfile(

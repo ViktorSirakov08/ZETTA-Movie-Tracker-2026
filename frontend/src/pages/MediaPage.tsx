@@ -1,16 +1,12 @@
 
 import { useEffect, useState } from 'react';
 import { getValidAccessToken } from '../lib/session';
-import {
-  setWatchStatus,
-  getWatchStatus,
-  updateMedia,
-  deleteMedia,
-} from '../api/media';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { setWatchStatus, getWatchStatus } from '../api/media';
+import { useParams, useNavigate } from 'react-router-dom';
 import { fetchMediaById } from '../api/media';
 import type { Media, Season } from '../types/media';
-import { rateMedia, getUserRating } from '../api/ratings';
+import { rateMedia, getUserRating, removeRating } from '../api/ratings';
+import { updateMedia, deleteMedia, addEpisode } from '../api/media';
 import {
   fetchSeasons,
   addSeason,
@@ -36,6 +32,7 @@ export function MediaDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [watchStatus, setWatchStatusState] = useState<string>('NOT_WATCHED');
   const [userRating, setUserRating] = useState<number | null>(null);
+  const [isRemovingRating, setIsRemovingRating] = useState(false);
   const [editAgeRestriction, setEditAgeRestriction] = useState<'NONE' | 'PG13' | 'PG18'>('NONE');
   const [editDurationMinutes, setEditDurationMinutes] = useState('');
   const [editGenreIds, setEditGenreIds] = useState<string[]>([]);
@@ -135,6 +132,7 @@ export function MediaDetailPage() {
   }
 
   const requiredAge = media ? minimumAgeFor(media.ageRestriction) : 0;
+  const isUnreleased = media ? new Date(formatReleaseDate(media.releaseDate)) > new Date() : false;
   const canWatch =
     requiredAge === 0 ||
     (viewerDateOfBirth !== null && calculateAge(viewerDateOfBirth) >= requiredAge);
@@ -147,6 +145,13 @@ export function MediaDetailPage() {
       if (!token) return;
       await setWatchStatus(token, id, status);
       setWatchStatusState(status);
+
+      // Marking/unmarking a series at the top level cascades to every
+      // episode and season on the backend — re-pull so the per-episode
+      // buttons reflect that instead of showing stale state.
+      if (media?.type === 'SERIES') {
+        await refreshSeasonsAndEpisodes();
+      }
   }
 
   async function handleRate(value: number) {
@@ -156,6 +161,23 @@ export function MediaDetailPage() {
     await rateMedia(token, id, value);
     setUserRating(value);
     fetchMediaById(id).then(setMedia);
+  }
+
+  async function handleRemoveRating() {
+    if (!id) return;
+    const token = await getValidAccessToken();
+    if (!token) return;
+
+    setIsRemovingRating(true);
+    try {
+      await removeRating(token, id);
+      setUserRating(null);
+      await fetchMediaById(id).then(setMedia);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Error removing rating.');
+    } finally {
+      setIsRemovingRating(false);
+    }
   }
 
   async function handleSaveChanges(e: React.FormEvent) {
@@ -188,6 +210,10 @@ export function MediaDetailPage() {
         setPlayError(`This title is restricted to viewers ${requiredAge}+.`);
         return;
       }
+      if (isUnreleased) {
+        setPlayError('This title has not been released yet.');
+        return;
+      }
       setPlayError(null);
       updateStatus('WATCHING')
         .then(() => {
@@ -202,6 +228,9 @@ export function MediaDetailPage() {
   }
 
   function handleAddToWatchlist() {
+    setPlayError(null);
+    setWatchlistNotice(null);
+    
     const nextState = watchStatus !== 'PLANNED_TO_WATCH';
 
     if (nextState) {
@@ -221,8 +250,11 @@ export function MediaDetailPage() {
 
   function handleMarkAsWatched() {
     const nextState = watchStatus !== 'WATCHED';
-
-    if (nextState) {
+    if (isUnreleased) {
+        setPlayError('This title has not been released yet.');
+        return;
+      }
+    if (nextState && canWatch) {
         updateStatus('WATCHED');
     } else {
         updateStatus('NOT_WATCHED');
@@ -322,9 +354,9 @@ export function MediaDetailPage() {
 
   return (
     <main className="media-detail-page">
-      <Link to="/home" className="back-link">
+      <button type="button" className="back-link" onClick={() => navigate(-1)}>
         ← Back
-      </Link>
+      </button>
 
       <div className="detail-layout">
         <div className="detail-poster">
@@ -345,41 +377,45 @@ export function MediaDetailPage() {
                 {media.ageRestriction !== 'NONE' ? ` · ${media.ageRestriction === 'PG13' ? '13+' : '18+'}` : ''}
               </p>
             </div>
-            <div className="rating-block">
-            <span className="detail-rating">
-                {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
-            </span>
+            {!isUnreleased && (
+              <div className="rating-block">
+                <span className="detail-rating">
+                  {media.rating !== null ? media.rating.toFixed(1) : 'No Rating'}
+                </span>
                 <div className="user-rating-stars" role="radiogroup" aria-label="Your rating">
-  <button
-    type="button"
-    className={userRating === 0 ? 'star star--filled' : 'star star--zero'}
-    onClick={() => handleRate(0)}
-    aria-label="Clear rating"
-  >
-    ✕
-  </button>
-
-  {[1, 2, 3, 4, 5].map((star) => (
-    <button
-      key={star}
-      type="button"
-      className={userRating !== null && star <= userRating ? 'star star--filled' : 'star'}
-      onClick={() => handleRate(star)}
-      aria-label={`Rate ${star} stars`}
-    >
-      ★
-    </button>
-  ))}
-</div>
-
-<button
-  type="button"
-  className="remove-rating-button"
-  onClick={() => handleRate(0)}
->
-  Remove Rating
-</button>
-            </div>
+                    <button
+                        type="button"
+                        className={userRating === 0 ? 'star star--filled' : 'star star--zero'}
+                        onClick={() => handleRate(0)}
+                        aria-label="Clear rating"
+                    >
+                        ✕
+                    </button>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                        key={star}
+                        type="button"
+                        className={userRating !== null && star <= userRating ? 'star star--filled' : 'star'}
+                        onClick={() => handleRate(star)}
+                        aria-label={`Rate ${star} stars`}
+                        >
+                        ★
+                        </button>
+                    ))}
+                </div>
+                <div className="remove-rating-button">
+                  {userRating !== null && (
+                      <button 
+                        type="button" 
+                        className="remove-rating-link" 
+                        onClick={handleRemoveRating}
+                        disabled={isRemovingRating}
+                      >
+                        {isRemovingRating ? 'Removing...' : 'Remove Rating'}
+                      </button>
+                    )}
+                </div>
+            </div>)}
           </div>
 
           <div className="genre-row" aria-label="Genres">

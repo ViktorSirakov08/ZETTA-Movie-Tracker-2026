@@ -23,6 +23,7 @@ import { Comment } from './media/entity/comments.entity';
 import { EpisodeWatchStatus } from './media/entity/episode-watch-status.entity';
 import { SeasonWatchStatus } from './media/entity/season-watch-status.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
+import { AuthToken } from './auth/entities/auth-token.entity';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { RefreshToken } from './auth/entities/refresh-token.entity';
           EpisodeWatchStatus,
           SeasonWatchStatus,
           RefreshToken,
+          AuthToken,
         ],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',

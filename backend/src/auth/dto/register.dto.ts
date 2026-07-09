@@ -2,6 +2,7 @@ import {
   ArrayUnique,
   IsArray,
   IsDateString,
+  IsEmail,
   IsIn,
   IsOptional,
   IsString,
@@ -24,6 +25,9 @@ export class RegisterDto {
       'username may only contain letters, numbers, underscores, dots and hyphens',
   })
   username: string;
+
+  @IsEmail()
+  email: string;
 
   @IsString()
   @MinLength(8)
