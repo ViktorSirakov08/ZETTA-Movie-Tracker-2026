@@ -15,49 +15,19 @@
   min-height: 64px;
 }
 
-.profile-button {
+.left-actions {
   position: absolute;
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: var(--radius-pill);
-  background: var(--sage-dark);
-  color: #fff;
-  font-weight: 600;
-  font-size: 14px;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: opacity 0.15s ease;
+  gap: 12px;
 }
 
-.history-button {
-  position: absolute;
-  left: 120px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: var(--radius-pill);
-  background: var(--sage-dark);
-  color: #fff;
-  font-weight: 600;
-  font-size: 14px;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: opacity 0.15s ease;
-}
-
+.profile-button,
+.history-button,
 .watchlist-button {
-  position: absolute;
-  left: 250px;
-  top: 50%;
-  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -72,7 +42,9 @@
   transition: opacity 0.15s ease;
 }
 
-.profile-button:hover {
+.profile-button:hover,
+.history-button:hover,
+.watchlist-button:hover {
   opacity: 0.9;
 }
 
@@ -435,7 +407,7 @@
     gap: 16px;
   }
 
-  .profile-button,
+  .left-actions,
   .add-media-button {
     position: static;
     transform: none;
@@ -488,9 +460,18 @@
     align-items: stretch;
   }
 
-  .profile-button,
+  .left-actions,
   .add-media-button {
     align-self: stretch;
+  }
+
+  .left-actions {
+    flex-direction: column;
+  }
+
+  .profile-button,
+  .history-button,
+  .watchlist-button {
     text-align: center;
   }
 

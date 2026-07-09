@@ -158,15 +158,17 @@ export function HomePage({ theme, onThemeChange }: HomePageProps) {
   return (
     <main className="home-page">
       <header className="top-bar">
-        <Link to="/profile" className="profile-button">
-          Profile
-        </Link>
-        <Link to="/history" className="history-button">
-          History
-        </Link>
-        <Link to="/watchlist" className="watchlist-button">
-          Watchlist
-        </Link>
+        <div className="left-actions">
+          <Link to="/profile" className="profile-button">
+            Profile
+          </Link>
+          <Link to="/history" className="history-button">
+            History
+          </Link>
+          <Link to="/watchlist" className="watchlist-button">
+            Watchlist
+          </Link>
+        </div>
 
         <div className="center-controls">
           <label className="search-shell" aria-label="Search media">
