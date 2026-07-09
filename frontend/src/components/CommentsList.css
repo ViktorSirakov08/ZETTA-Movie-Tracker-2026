@@ -42,3 +42,21 @@
   line-height: 1.7;
   color: #3d4436;
 }
+
+:root[data-theme='dark'] .comment-item {
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  color: #fff;
+}
+
+:root[data-theme='dark'] .comment-meta strong {
+  color: #fff;
+}
+
+:root[data-theme='dark'] .comment-date {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+:root[data-theme='dark'] .comment-body {
+  color: #fff;
+}
