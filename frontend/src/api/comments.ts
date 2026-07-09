@@ -28,3 +28,19 @@ export async function postComment(token: string | null, mediaId: string, content
   }
   return res.json();
 }
+
+export async function deleteComment(token: string | null, mediaId: string, commentId: string): Promise<void> {
+  if (!token) {
+    throw new Error('Authentication required to delete comments.');
+  }
+  const res = await fetch(`${API_BASE_URL}/media/${mediaId}/comments/${commentId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? `Failed to delete comment: ${res.status}`);
+  }
+}
