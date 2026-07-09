@@ -46,38 +46,46 @@ function MediaRow({ items }: { items: Media[] }) {
 
   return (
     <div className="media-row">
-      {items.map((item) => (
-        <article className="media-card" key={item.id}>
-          <Link to={`/media/${item.id}`} className="media-card-link" key={item.id}>
-            <div className="media-poster">
-              {item.posterUrl ? (
-                <img src={item.posterUrl} alt={item.name} />
-              ) : (
-                <span className="poster-label">Picture</span>
-              )}
-            </div>
-          </Link>
-          <div className="media-copy">
-            <div className="media-head">
-              <h2>{item.name}</h2>
-              <span className="media-rating">
-                {item.rating !== null ? item.rating.toFixed(1) : 'No Rating'}
-              </span>
-            </div>
-            <p className="release-year">
-              Released {formatReleaseDate(item.releaseDate)}
-            </p>
-            <p>{item.description}</p>
-            <div className="genre-row" aria-label="Genres">
-              {item.genres.map((genre) => (
-                <span className="genre-pill" key={genre.id}>
-                  {formatGenreLabel(genre.name)}
+      {items.map((item) => {
+        const isUnreleased = new Date(item.releaseDate) > new Date();
+
+        return (
+          <article className="media-card" key={item.id}>
+            <Link to={`/media/${item.id}`} className="media-card-link">
+              <div className={`media-poster ${isUnreleased ? 'media-poster--blurred' : ''}`}>
+                {item.posterUrl ? (
+                  <img src={item.posterUrl} alt={item.name} />
+                ) : (
+                  <span className="poster-label">Picture</span>
+                )}
+                {isUnreleased && (
+                  <div className="unreleased-overlay-badge">Coming Soon</div>
+                )}
+              </div>
+            </Link> {/* Clean break right after the image frame container */}
+            
+            <div className="media-copy">
+              <div className="media-head">
+                <h2>{item.name}</h2>
+                <span className="media-rating">
+                  {item.rating !== null ? item.rating.toFixed(1) : 'No Rating'}
                 </span>
-              ))}
+              </div>
+              <p className="release-year">
+                Released {formatReleaseDate(item.releaseDate)}
+              </p>
+              <p>{item.description}</p>
+              <div className="genre-row" aria-label="Genres">
+                {item.genres.map((genre) => (
+                  <span className="genre-pill" key={genre.id}>
+                    {formatGenreLabel(genre.name)}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        </article>
-      ))}
+          </article>
+        );
+      })}
     </div>
   );
 }
