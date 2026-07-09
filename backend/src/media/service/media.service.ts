@@ -388,6 +388,14 @@ export class MediaService {
           : [];
       if (watchedEpisodeRows.length > 0) {
         entry.status = WatchStatus.WATCHING;
+      } else if (
+        entry.status === WatchStatus.WATCHED ||
+        entry.status === WatchStatus.WATCHING
+      ) {
+        // Unmarking the last watched episode drops progress back to zero —
+        // only reset an episode-driven status, never a manually-set
+        // PLANNED_TO_WATCH (that's the user's own intent, not progress).
+        entry.status = WatchStatus.NOT_WATCHED;
       }
     }
     await this.watchStatusRepo.save(entry);
