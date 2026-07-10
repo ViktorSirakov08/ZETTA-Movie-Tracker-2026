@@ -18,6 +18,7 @@ import { getValidAccessToken } from '../lib/session';
 
 type MediaType = 'MOVIE' | 'SERIES';
 type AgeRestriction = 'none' | '13' | '18';
+type PosterSource = 'FILE' | 'URL';
 
 const AGE_RESTRICTION_OPTIONS: { value: AgeRestriction; label: string }[] = [
   { value: 'none', label: 'None' },
@@ -39,9 +40,6 @@ function createEpisodeDraft(): EpisodeDraft {
   return { key: crypto.randomUUID(), title: '' };
 }
 
-// Season/episode numbers are never typed by hand — they're derived from
-// position here and re-derived server-side when submitted in order, so a
-// season or episode can never be created out of sequence.
 function createSeasonDraft(): SeasonDraft {
   return { key: crypto.randomUUID(), episodes: [createEpisodeDraft()] };
 }
@@ -65,6 +63,9 @@ export function AddMediaPage() {
     [],
   );
   const [ageRestriction, setAgeRestriction] = useState<AgeRestriction>('none');
+  
+  // New state to toggle between 'FILE' or 'URL'
+  const [posterSource, setPosterSource] = useState<PosterSource>('FILE');
   const [posterUrl, setPosterUrl] = useState('');
   const [posterPreview, setPosterPreview] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<SeasonDraft[]>([createSeasonDraft()]);
@@ -105,7 +106,6 @@ export function AddMediaPage() {
   }
 
   async function handlePosterFileChange(event: ChangeEvent<HTMLInputElement>) {
-    console.log('handlePosterFileChange fired', event.target.files);
     const file = event.target.files?.[0];
     if (!file || !token) return;
 
@@ -128,6 +128,13 @@ export function AddMediaPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload poster.');
     }
+  }
+
+  // Resets poster fields when switching modes to prevent stale data mixing
+  function handleSourceChange(source: PosterSource) {
+    setPosterSource(source);
+    setPosterUrl('');
+    setPosterPreview(null);
   }
 
   function addSeasonDraft() {
@@ -251,8 +258,6 @@ export function AddMediaPage() {
 
       if (mediaType === 'SERIES') {
         for (const seasonDraft of seasons) {
-          // addSeason creates the season's first episode itself (a season
-          // is never empty), so only the remaining drafts need addEpisode.
           const [firstEpisode, ...restEpisodes] = seasonDraft.episodes;
           const season = await addSeason(validToken, created.id, firstEpisode.title.trim());
           for (const episodeDraft of restEpisodes) {
@@ -326,9 +331,27 @@ export function AddMediaPage() {
             </div>
           </div>
 
+          {/* REFACTORED POSTER FIELD */}
           <div className="field">
-            <label htmlFor="poster-url">Poster</label>
-            <div className="poster-upload">
+            <label>Poster Source</label>
+            <div className="type-toggle source-toggle" role="group" aria-label="Poster source selection">
+              <button
+                type="button"
+                className={posterSource === 'FILE' ? 'is-active' : ''}
+                onClick={() => handleSourceChange('FILE')}
+              >
+                Upload File
+              </button>
+              <button
+                type="button"
+                className={posterSource === 'URL' ? 'is-active' : ''}
+                onClick={() => handleSourceChange('URL')}
+              >
+                Image URL
+              </button>
+            </div>
+
+            <div className="poster-upload unified-poster-layout">
               <div className="poster-preview">
                 {posterPreview || posterUrl ? (
                   <img
@@ -339,25 +362,28 @@ export function AddMediaPage() {
                   <span>No poster yet</span>
                 )}
               </div>
+              
               <div className="poster-upload-actions">
-                <input
-                  id="poster-file"
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePosterFileChange}
-                />
-                <span className="field-hint">or paste an image URL</span>
+                {posterSource === 'FILE' ? (
+                  <input
+                    id="poster-file"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePosterFileChange}
+                  />
+                ) : (
+                  <input
+                    id="poster-url"
+                    type="url"
+                    placeholder="https://example.com/poster.jpg"
+                    value={posterUrl}
+                    onChange={(e) => {
+                      setPosterUrl(e.target.value);
+                      setPosterPreview(e.target.value || null);
+                    }}
+                  />
+                )}
               </div>
-              <input
-                id="poster-url"
-                type="url"
-                placeholder=""
-                value={posterUrl.startsWith('data:') ? '' : posterUrl}
-                onChange={(e) => {
-                  setPosterUrl(e.target.value);
-                  setPosterPreview(e.target.value || null);
-                }}
-              />
             </div>
           </div>
 
@@ -392,7 +418,6 @@ export function AddMediaPage() {
                 type="number"
                 min="1"
                 step="1"
-                placeholder={mediaType === 'MOVIE' ? '' : ''}
                 value={durationMinutes}
                 onChange={(e) => setDurationMinutes(e.target.value)}
               />

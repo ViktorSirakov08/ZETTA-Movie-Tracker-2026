@@ -14,20 +14,36 @@
   gap: 16px;
 }
 
-.add-media-page .field input:not([type='checkbox']):not([type='file']) {
+.add-media-page .field input[type='text'],
+.add-media-page .field input[type='number'],
+.add-media-page .field input[type='date'] {
   width: 100%;
+  height: 45px;
   padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-input);
   font-size: 14px;
   background: var(--color-bg);
   color: var(--color-text);
+  box-sizing: border-box;
 }
 
-.add-media-page .field input:not([type='checkbox']):not([type='file']):focus {
+.add-media-page .field input[type='text']:focus,
+.add-media-page .field input[type='number']:focus,
+.add-media-page .field input[type='date']:focus {
   outline: none;
   border-color: var(--color-sage);
   background: var(--color-card-bg);
+}
+
+.add-media-page .field-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.add-media-page .field-row .field {
+  flex: 1;
 }
 
 .add-media-page .interest-picker {
@@ -60,4 +76,25 @@
   color: var(--color-sage-dark);
   font-weight: 600;
   font-size: 13px;
+}
+
+.add-media-page .source-toggle {
+  margin-bottom: 12px;
+}
+
+.add-media-page .unified-poster-layout {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.add-media-page .unified-poster-layout .poster-upload-actions {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.add-media-page .unified-poster-layout #poster-file {
+  font-size: 14px;
+  color: var(--color-text);
 }
