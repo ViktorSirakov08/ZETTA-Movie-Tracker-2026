@@ -38,6 +38,8 @@ export class MediaReleaseNotificationService implements OnModuleInit {
       this.queueName,
       async (job) => this.processReleaseEmailJob(job),
     );
+
+    await this.queueTodayReleaseNotifications();
   }
 
   @Cron('5 0 * * *', {
