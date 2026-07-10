@@ -24,6 +24,7 @@ import { EpisodeWatchStatus } from './media/entity/episode-watch-status.entity';
 import { SeasonWatchStatus } from './media/entity/season-watch-status.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { AuthToken } from './auth/entities/auth-token.entity';
+import { MediaReleaseNotification } from './media/entity/media-release-notification.entity';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { AuthToken } from './auth/entities/auth-token.entity';
           SeasonWatchStatus,
           RefreshToken,
           AuthToken,
+          MediaReleaseNotification,
         ],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',
