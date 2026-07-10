@@ -66,15 +66,17 @@ export class MailService {
       to,
       subject: `${mediaName} is released today`,
       text: [
-        `${mediaName} is released today.`,
+        `${mediaName} is released today in the Europe/Sofia release timezone.`,
         '',
         'You added it to your watchlist. You can watch it now.',
+        'If you are in a different timezone, playback may become available a few hours later in your local time.',
         '',
         `Open it here: ${mediaUrl}`,
       ].join('\n'),
       html: [
-        `<p><strong>${this.escapeHtml(mediaName)}</strong> is released today.</p>`,
+        `<p><strong>${this.escapeHtml(mediaName)}</strong> is released today in the Europe/Sofia release timezone.</p>`,
         '<p>You added it to your watchlist. You can watch it now.</p>',
+        '<p>If you are in a different timezone, playback may become available a few hours later in your local time.</p>',
         `<p><a href="${this.escapeHtml(mediaUrl)}">Open in Movie Tracker</a></p>`,
       ].join(''),
     });

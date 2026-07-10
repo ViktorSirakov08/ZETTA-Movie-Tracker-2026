@@ -9,7 +9,7 @@ import { useMediaSearch } from '../hooks/useMediaSearch';
 import { intersectByRelevance } from '../lib/media-filters';
 import type { Media } from '../types/media';
 import { formatGenreLabel } from '../constants/interests';
-import { formatReleaseDate } from '../lib/date';
+import { formatReleaseDate, isReleaseDateInFuture } from '../lib/date';
 
 type Category = 'Newest' | 'Highest Rated';
 type TypeFilter = 'All' | 'MOVIE' | 'SERIES';
@@ -47,7 +47,7 @@ function MediaRow({ items }: { items: Media[] }) {
   return (
     <div className="media-row">
       {items.map((item) => {
-        const isUnreleased = new Date(item.releaseDate) > new Date();
+        const isUnreleased = isReleaseDateInFuture(item.releaseDate);
 
         return (
           <article className="media-card" key={item.id}>

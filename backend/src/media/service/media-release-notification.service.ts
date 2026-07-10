@@ -1,10 +1,6 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MailService } from '../../mail/mail.service';
@@ -23,13 +19,9 @@ interface ReleaseEmailJob {
 }
 
 @Injectable()
-export class MediaReleaseNotificationService
-  implements OnModuleInit, OnModuleDestroy
-{
+export class MediaReleaseNotificationService implements OnModuleInit {
   private readonly logger = new Logger(MediaReleaseNotificationService.name);
-  private readonly maxAttempts = 3;
-  private readonly checkIntervalMs = 60 * 60 * 1000;
-  private interval: ReturnType<typeof setInterval> | null = null;
+  private readonly maxAttempts = 2;
 
   constructor(
     @InjectRepository(MediaWatchStatus)
@@ -46,17 +38,13 @@ export class MediaReleaseNotificationService
       this.queueName,
       async (job) => this.processReleaseEmailJob(job),
     );
-
-    await this.queueTodayReleaseNotifications();
-    this.interval = setInterval(() => {
-      void this.queueTodayReleaseNotifications();
-    }, this.checkIntervalMs);
   }
 
-  onModuleDestroy(): void {
-    if (this.interval) {
-      clearInterval(this.interval);
-    }
+  @Cron('5 0 * * *', {
+    timeZone: 'Europe/Sofia',
+  })
+  async queueDailyReleaseNotifications(): Promise<void> {
+    await this.queueTodayReleaseNotifications();
   }
 
   async queueTodayReleaseNotifications(): Promise<number> {
@@ -196,7 +184,18 @@ export class MediaReleaseNotificationService
   }
 
   private getTodayDateString(): string {
-    return new Date().toISOString().slice(0, 10);
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/Sofia',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+
+    const year = parts.find((part) => part.type === 'year')?.value;
+    const month = parts.find((part) => part.type === 'month')?.value;
+    const day = parts.find((part) => part.type === 'day')?.value;
+
+    return `${year}-${month}-${day}`;
   }
 
   private get queueName(): string {
