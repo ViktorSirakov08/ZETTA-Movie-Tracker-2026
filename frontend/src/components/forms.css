@@ -399,3 +399,34 @@
   box-shadow: 0 0 0 1000px #000 inset;
   caret-color: #fff;
 }
+
+
+:root[data-theme='dark'] .field select[multiple] option:checked,
+:root[data-theme='dark'] .field select[size] option:checked {
+  background: var(--color-green);
+  color: #000;
+}
+
+:root[data-theme='dark'] .chip--active,
+:root[data-theme='dark'] .interest-chip--active,
+:root[data-theme='dark'] .chip-active,
+:root[data-theme='dark'] [class*="active"] {
+  background: var(--color-green);
+  color: #000000 !important;
+}
+
+:root[data-theme='dark'] .btn-primary {
+  background: var(--color-green);
+  color: #000000;
+}
+
+:root[data-theme='dark'] .interest-chip--selected {
+  background: var(--color-green) !important;
+  border-color: var(--color-green) !important;
+  color: #000000 !important;
+}
+
+:root[data-theme='dark'] .btn-primary {
+  background: var(--color-green);
+  color: #000000;
+}

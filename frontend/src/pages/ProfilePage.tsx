@@ -113,9 +113,9 @@ export function ProfilePage() {
       </Link>
 
       <h1 className="auth-title">Your profile</h1>
-      <p className="auth-subtitle">
-        Update your username and pick what you're into
-      </p>
+        <p className="auth-subtitle">
+          Update your username and pick what you're into.
+        </p>
 
       <form className="auth-form" onSubmit={handleSubmit}>
         {error && <div className="form-error-banner">{error}</div>}

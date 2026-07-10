@@ -382,6 +382,10 @@
   color: rgba(241, 244, 235, 0.82);
 }
 
+:root[data-theme='dark'] .detail-meta {
+  color: var(--color-green);
+}
+
 :root[data-theme='dark'] .detail-actions .action-button:not(.action-button--primary):not(.action-button--danger) {
   color: #000000 !important;
 }
@@ -392,7 +396,9 @@
 }
 
 :root[data-theme='dark'] .action-button--primary {
-  color: #ffffff !important;
+  color: #000000 !important;
+  background: var(--color-green) !important;
+  border-color: var(--color-green) !important;
 }
 
 :root[data-theme='dark'] .action-button--danger {
@@ -404,7 +410,7 @@
 }
 
 :root[data-theme='dark'] .star--filled {
-  color: var(--sage-dark) !important;
+  color: var(--color-green) !important;
 }
 
 :root[data-theme='dark'] .star--zero,
@@ -418,4 +424,33 @@
 :root[data-theme='dark'] .rating-block button:not(.star) {
   color: #ffffff !important;
   border-color: rgba(255, 255, 255, 0.75);
+}
+
+:root[data-theme='dark'] .detail-rating {
+  color: var(--color-green);
+  background: var(--background-green);
+}
+
+:root[data-theme='dark'] .genre-pill {
+  background: var(--background-green);
+  color: var(--color-green);
+}
+
+:root[data-theme='dark'] .back-link,
+:root[data-theme='dark'] .season-group,
+:root[data-theme='dark'] .episode-number, 
+:root[data-theme='dark'] .episode-title,
+:root[data-theme='dark'] .season-number {
+  color: var(--color-green);
+}
+
+:root[data-theme='dark'] .back-link:hover {
+  opacity: 0.8;
+}
+
+:root[data-theme='dark'] .episode-watch-toggle,
+:root[data-theme='dark'] .episode-row {
+  color: var(--color-green);
+  background: #000;
+  border-color: #fff;
 }

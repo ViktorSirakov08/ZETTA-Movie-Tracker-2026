@@ -747,7 +747,7 @@ function EpisodeList({
         return (
           <div key={season.id} className="season-group">
             <h3>
-              Season {season.seasonNum}
+              <p className="season-number">Season {season.seasonNum}</p> 
               {seasonWatched && (
                 <span className="season-watched-badge"> · ✓ Watched</span>
               )}

@@ -49,3 +49,31 @@
 .media-row::-webkit-scrollbar-track {
   background: transparent;
 }
+
+.home-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-pill);
+  background: var(--sage-dark);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.home-button:hover {
+  opacity: 0.9;
+}
+
+:root[data-theme='dark'] .home-button {
+  background: var(--color-green);
+  color: #000;
+}
+
+:root[data-theme='dark'] .home-button:hover {
+  opacity: 0.85;
+}

@@ -98,9 +98,11 @@ export function HistoryPage() {
   return (
     <main className="home-page">
       <header className="top-bar">
-        <Link to="/home" className="profile-button">
-          Home
-        </Link>
+        <div className="left-actions">
+          <Link to="/home" className="home-button">
+            Home
+          </Link>
+        </div>
 
         <div className="center-controls">
           <label className="search-shell" aria-label="Search history">

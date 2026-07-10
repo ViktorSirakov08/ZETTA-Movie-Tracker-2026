@@ -46,7 +46,7 @@
 .auth-illustration-circle--dark {
   width: 260px;
   height: 260px;
-  background: var(--color-sage-dark);
+  background: var(--color-green);
   bottom: -100px;
   left: -80px;
 }
@@ -171,4 +171,8 @@
   .auth-illustration {
     display: none;
   }
+}
+
+:root[data-theme='dark'] .auth-quote {
+  background: var(--color-green);
 }
