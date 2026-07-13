@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { MediaModule } from './media/media.module';
@@ -24,12 +25,14 @@ import { EpisodeWatchStatus } from './media/entity/episode-watch-status.entity';
 import { SeasonWatchStatus } from './media/entity/season-watch-status.entity';
 import { RefreshToken } from './auth/entities/refresh-token.entity';
 import { AuthToken } from './auth/entities/auth-token.entity';
+import { MediaReleaseNotification } from './media/entity/media-release-notification.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -55,6 +58,7 @@ import { AuthToken } from './auth/entities/auth-token.entity';
           SeasonWatchStatus,
           RefreshToken,
           AuthToken,
+          MediaReleaseNotification,
         ],
         synchronize:
           configService.get<string>('NODE_ENV', 'development') !== 'production',

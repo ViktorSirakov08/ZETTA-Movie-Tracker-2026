@@ -8,7 +8,7 @@ import { fetchMedia, getWatchHistory, getCurrentlyWatching, getWatchlist } from 
 import { fetchGenres } from '../api/genres';
 import { useMediaSearch } from '../hooks/useMediaSearch';
 import { formatGenreLabel } from '../constants/interests';
-import { formatReleaseDate } from '../lib/date';
+import { formatReleaseDate, isReleaseDateInFuture } from '../lib/date';
 import type { Media } from '../types/media';
 import type { Genre } from '../types/genre';
 
@@ -326,7 +326,7 @@ export function HomePage({ theme, onThemeChange }: HomePageProps) {
 
         <div className="media-grid">
           {filteredMedia.map((item) => {
-            const isUnreleased = new Date(item.releaseDate) > new Date();
+            const isUnreleased = isReleaseDateInFuture(item.releaseDate);
 
             return (
               <article className="media-card" key={item.id}>

@@ -21,7 +21,7 @@ import { fetchGenres } from '../api/genres';
 import type { Genre } from '../types/genre';
 import { getMe, type AuthUser } from '../api/auth';
 import { calculateAge, minimumAgeFor } from '../lib/age';
-import { formatReleaseDate } from '../lib/date';
+import { formatReleaseDate, isReleaseDateInFuture } from '../lib/date';
 import './MediaPage.css';
 import { CommentsList } from '../components/CommentsList';
 
@@ -132,7 +132,7 @@ export function MediaDetailPage() {
   }
 
   const requiredAge = media ? minimumAgeFor(media.ageRestriction) : 0;
-  const isUnreleased = media ? new Date(formatReleaseDate(media.releaseDate)) > new Date() : false;
+  const isUnreleased = media ? isReleaseDateInFuture(media.releaseDate) : false;
   const canWatch =
     requiredAge === 0 ||
     (viewerDateOfBirth !== null && calculateAge(viewerDateOfBirth) >= requiredAge);

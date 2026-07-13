@@ -7,6 +7,7 @@ import { Genre } from './entity/genre.entity';
 import { MediaWatchStatus } from './entity/media-watch-status.entity';
 import { EpisodeWatchStatus } from './entity/episode-watch-status.entity';
 import { SeasonWatchStatus } from './entity/season-watch-status.entity';
+import { MediaReleaseNotification } from './entity/media-release-notification.entity';
 import { Interest } from '../interests/entities/interest.entity';
 import { Comment } from './entity/comments.entity';
 import { SearchModule } from '../search/search.module';
@@ -16,6 +17,9 @@ import { MediaController } from './controller/media.controller';
 import { CommentsController } from './comments.controller';
 import { CommentsService } from './comments.service';
 import { StorageModule } from '../storage/storage.module';
+import { MailModule } from '../mail/mail.module';
+import { QueueModule } from '../queue/queue.module';
+import { MediaReleaseNotificationService } from './service/media-release-notification.service';
 
 @Module({
   imports: [
@@ -27,14 +31,17 @@ import { StorageModule } from '../storage/storage.module';
       MediaWatchStatus,
       EpisodeWatchStatus,
       SeasonWatchStatus,
+      MediaReleaseNotification,
       Interest,
       Comment,
     ]),
     SearchModule,
     InterestsModule,
-    StorageModule
+    StorageModule,
+    MailModule,
+    QueueModule,
   ],
   controllers: [MediaController, CommentsController],
-  providers: [MediaService, CommentsService],
+  providers: [MediaService, CommentsService, MediaReleaseNotificationService],
 })
 export class MediaModule {}

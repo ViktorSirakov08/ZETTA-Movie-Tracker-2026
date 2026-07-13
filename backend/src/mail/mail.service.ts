@@ -57,6 +57,31 @@ export class MailService {
     });
   }
 
+  async sendMediaReleasedEmail(
+    to: string,
+    mediaName: string,
+    mediaUrl: string,
+  ): Promise<void> {
+    await this.send({
+      to,
+      subject: `${mediaName} is released today`,
+      text: [
+        `${mediaName} is released today in the Europe/Sofia release timezone.`,
+        '',
+        'You added it to your watchlist. You can watch it now.',
+        'If you are in a different timezone, playback may become available a few hours later in your local time.',
+        '',
+        `Open it here: ${mediaUrl}`,
+      ].join('\n'),
+      html: [
+        `<p><strong>${this.escapeHtml(mediaName)}</strong> is released today in the Europe/Sofia release timezone.</p>`,
+        '<p>You added it to your watchlist. You can watch it now.</p>',
+        '<p>If you are in a different timezone, playback may become available a few hours later in your local time.</p>',
+        `<p><a href="${this.escapeHtml(mediaUrl)}">Open in Movie Tracker</a></p>`,
+      ].join(''),
+    });
+  }
+
   private async send(message: MailMessage): Promise<void> {
     const host = this.configService.get<string>('SMTP_HOST');
     const from = this.configService.get<string>(
