@@ -337,6 +337,11 @@ export function MediaDetailPage() {
   }
 
   async function handleToggleEpisodeWatched(episodeId: string, watched: boolean) {
+    if (watched && isUnreleased) {
+      setPlayError('This title has not been released yet.');
+      return;
+    }
+
     const token = await getValidAccessToken();
     if (!token) return;
 
@@ -686,7 +691,7 @@ export function MediaDetailPage() {
           {playError && (
             <p className="detail-age-restriction-notice">{playError}</p>)}
 
-          <CommentsList mediaId={id!} />
+          <CommentsList mediaId={id!} isUnreleased={isUnreleased} />
 
           {watchlistNotice && (
             <p className="detail-age-restriction-notice">{watchlistNotice}</p>

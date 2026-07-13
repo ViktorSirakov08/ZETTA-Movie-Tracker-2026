@@ -4,7 +4,15 @@ import './CommentForm.css';
 import { getToken } from '../lib/auth-storage';
 import { postComment } from '../api/comments';
 
-export function CommentForm({ mediaId, onPosted }: { mediaId: string; onPosted: () => void; }) {
+export function CommentForm({
+  mediaId,
+  onPosted,
+  isUnreleased,
+}: {
+  mediaId: string;
+  onPosted: () => void;
+  isUnreleased: boolean;
+}) {
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +45,14 @@ export function CommentForm({ mediaId, onPosted }: { mediaId: string; onPosted: 
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (isUnreleased) {
+    return (
+      <div className="comment-form-notice">
+        <p>Comments will open once this title is released.</p>
+      </div>
+    );
   }
 
   if (!token) {
