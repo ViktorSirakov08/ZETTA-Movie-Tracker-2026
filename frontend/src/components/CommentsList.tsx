@@ -6,7 +6,13 @@ import { getStoredUser } from '../lib/auth-storage';
 import { getValidAccessToken } from '../lib/session';
 import './CommentsList.css';
 
-export function CommentsList({ mediaId }: { mediaId: string }) {
+export function CommentsList({
+  mediaId,
+  isUnreleased,
+}: {
+  mediaId: string;
+  isUnreleased: boolean;
+}) {
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,11 +61,13 @@ export function CommentsList({ mediaId }: { mediaId: string }) {
   return (
     <section className="comments-section">
       <h3>Comments</h3>
-      <CommentForm mediaId={mediaId} onPosted={load} />
+      <CommentForm mediaId={mediaId} onPosted={load} isUnreleased={isUnreleased} />
 
       {loading && <p>Loading comments...</p>}
       {error && <div className="form-error-banner">{error}</div>}
-      {comments && comments.length === 0 && <p>No comments yet. Be the first to comment.</p>}
+      {!isUnreleased && comments && comments.length === 0 && (
+        <p>No comments yet. Be the first to comment.</p>
+      )}
       {comments && comments.length > 0 && (
         <ul className="comment-list">
           {comments.map((c) => (
