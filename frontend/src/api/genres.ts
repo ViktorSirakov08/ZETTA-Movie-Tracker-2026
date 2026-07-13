@@ -22,17 +22,23 @@ export async function createGenre(name: string): Promise<Genre> {
 
 export async function ensureGenreIds(genreNames: string[]): Promise<string[]> {
   const genres = await fetchGenres();
-  const byName = new Map(genres.map((genre) => [genre.name, genre]));
+  // Case-insensitive: the DB treats genre names as case-insensitive-unique
+  // (see GenreService.create), but our fixed GENRE_NAMES list is lowercase
+  // while some existing genres are Title Case — an exact-case lookup here
+  // would miss them and try to recreate a "new" duplicate that the backend
+  // then correctly rejects.
+  const byLowerName = new Map(genres.map((genre) => [genre.name.toLowerCase(), genre]));
 
   for (const name of genreNames) {
-    if (!byName.has(name)) {
+    const lowerName = name.toLowerCase();
+    if (!byLowerName.has(lowerName)) {
       const created = await createGenre(name);
-      byName.set(name, created);
+      byLowerName.set(lowerName, created);
     }
   }
 
   return genreNames.map((name) => {
-    const genre = byName.get(name);
+    const genre = byLowerName.get(name.toLowerCase());
     if (!genre) {
       throw new Error(`Genre "${name}" could not be resolved.`);
     }
