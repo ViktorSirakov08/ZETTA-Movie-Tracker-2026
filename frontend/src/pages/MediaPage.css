@@ -386,6 +386,10 @@
   color: var(--color-green);
 }
 
+:root[data-theme='dark'] .action-button {
+  color: #000 !important;
+}
+
 :root[data-theme='dark'] .detail-actions .action-button:not(.action-button--primary):not(.action-button--danger) {
   color: #000000 !important;
 }
@@ -453,4 +457,8 @@
   color: var(--color-green);
   background: #000;
   border-color: #fff;
+}
+
+:root[data-theme='dark'] .edit-media-panel {
+  background: #000;
 }
