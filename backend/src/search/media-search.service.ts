@@ -123,23 +123,32 @@ export class MediaSearchService implements OnModuleInit {
     filter.push({ terms: { interests: params.interests } });
   }
 
-  // Build the text search clause dynamically
-  let must: Record<string, unknown>[];
-
-  if (trimmedQuery) {
-    must = [
-      {
-        bool: {
-          should: [
-            // 1. Primary target: Phrase prefix on the title (with a bit of word-order flexibility)
-            {
-              match_phrase_prefix: {
-                name: {
-                  query: trimmedQuery,
-                  slop: 2,
-                  boost: 3 // Gives title matches much higher priority
-                }
-              }
+    // Two clauses, either one is enough to match (should / minimum_should_match: 1):
+    // bool_prefix keeps results appearing live as the user types correctly,
+    // while the second, fuzzy clause catches queries with a typo that would
+    // never be a valid prefix of anything. Neither alone covers both cases.
+    const must = trimmedQuery
+      ? [
+          {
+            bool: {
+              should: [
+                {
+                  multi_match: {
+                    query: trimmedQuery,
+                    type: 'bool_prefix' as const,
+                    fields: ['name^2', 'description', 'genres', 'interests'],
+                  },
+                },
+                {
+                  multi_match: {
+                    query: trimmedQuery,
+                    type: 'best_fields' as const,
+                    fields: ['name^2', 'description', 'genres', 'interests'],
+                    fuzziness: 'AUTO' as const,
+                  },
+                },
+              ],
+              minimum_should_match: 1,
             },
             // 2. Secondary target: Let them search keywords inside descriptions
             {
