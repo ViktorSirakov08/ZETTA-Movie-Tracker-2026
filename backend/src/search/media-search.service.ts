@@ -112,13 +112,32 @@ export class MediaSearchService implements OnModuleInit {
       filter.push({ terms: { interests: params.interests } });
     }
 
+    // Two clauses, either one is enough to match (should / minimum_should_match: 1):
+    // bool_prefix keeps results appearing live as the user types correctly,
+    // while the second, fuzzy clause catches queries with a typo that would
+    // never be a valid prefix of anything. Neither alone covers both cases.
     const must = trimmedQuery
       ? [
           {
-            multi_match: {
-              query: trimmedQuery,
-              type: 'bool_prefix' as const,
-              fields: ['name^2', 'description', 'genres', 'interests'],
+            bool: {
+              should: [
+                {
+                  multi_match: {
+                    query: trimmedQuery,
+                    type: 'bool_prefix' as const,
+                    fields: ['name^2', 'description', 'genres', 'interests'],
+                  },
+                },
+                {
+                  multi_match: {
+                    query: trimmedQuery,
+                    type: 'best_fields' as const,
+                    fields: ['name^2', 'description', 'genres', 'interests'],
+                    fuzziness: 'AUTO' as const,
+                  },
+                },
+              ],
+              minimum_should_match: 1,
             },
           },
         ]
