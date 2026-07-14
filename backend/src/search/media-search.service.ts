@@ -71,9 +71,9 @@ export class MediaSearchService implements OnModuleInit {
     });
   }
 
-  async reindexAll(mediaList: Media[]): Promise<number> {
+  async reindexAll(mediaList: Media[]): Promise<{ indexed: number; failed: number; errors: unknown[] }> {
     if (mediaList.length === 0) {
-      return 0;
+      return { indexed: 0, failed: 0, errors: [] };
     }
 
     const operations = mediaList.flatMap((media) => [
@@ -81,8 +81,19 @@ export class MediaSearchService implements OnModuleInit {
       toMediaSearchDocument(media),
     ]);
 
-    await this.es.bulk({ operations, refresh: true });
-    return mediaList.length;
+    const response = await this.es.bulk({ operations, refresh: true });
+
+    if (response.errors) {
+      const failedItems = response.items.filter((item) => item.index?.error);
+      this.logger.error(`Reindex had ${failedItems.length} failures`, failedItems);
+      return {
+        indexed: mediaList.length - failedItems.length,
+        failed: failedItems.length,
+        errors: failedItems.map((item) => item.index?.error),
+      };
+    }
+
+    return { indexed: mediaList.length, failed: 0, errors: [] };
   }
 
   /**
@@ -98,39 +109,61 @@ export class MediaSearchService implements OnModuleInit {
    * `match_all` + filter.
    */
   async searchIds(params: {
-    query?: string;
-    genre?: string;
-    interests?: string[];
-  }): Promise<string[]> {
-    const trimmedQuery = params.query?.trim();
+  query?: string;
+  genre?: string;
+  interests?: string[];
+}): Promise<string[]> {
+  const trimmedQuery = params.query?.trim();
 
-    const filter: Record<string, unknown>[] = [];
-    if (params.genre) {
-      filter.push({ term: { genres: params.genre } });
-    }
-    if (params.interests?.length) {
-      filter.push({ terms: { interests: params.interests } });
-    }
+  const filter: Record<string, unknown>[] = [];
+  if (params.genre) {
+    filter.push({ term: { genres: params.genre } });
+  }
+  if (params.interests?.length) {
+    filter.push({ terms: { interests: params.interests } });
+  }
 
-    const must = trimmedQuery
-      ? [
-          {
-            multi_match: {
-              query: trimmedQuery,
-              type: 'bool_prefix' as const,
-              fields: ['name^2', 'description', 'genres', 'interests'],
+  // Build the text search clause dynamically
+  let must: Record<string, unknown>[];
+
+  if (trimmedQuery) {
+    must = [
+      {
+        bool: {
+          should: [
+            // 1. Primary target: Phrase prefix on the title (with a bit of word-order flexibility)
+            {
+              match_phrase_prefix: {
+                name: {
+                  query: trimmedQuery,
+                  slop: 2,
+                  boost: 3 // Gives title matches much higher priority
+                }
+              }
             },
-          },
-        ]
-      : [{ match_all: {} }];
+            // 2. Secondary target: Let them search keywords inside descriptions
+            {
+              match: {
+                description: {
+                  query: trimmedQuery
+                }
+              }
+            }
+          ]
+        }
+      }
+    ];
+  } else {
+    must = [{ match_all: {} }];
+  }
 
-    const result = await this.es.search<MediaSearchDocument>({
-      index: MEDIA_INDEX,
-      query: { bool: { must, filter } },
-    });
+  const result = await this.es.search<MediaSearchDocument>({
+    index: MEDIA_INDEX,
+    query: { bool: { must, filter } },
+  });
 
-    return result.hits.hits
-      .map((hit) => hit._id)
-      .filter((id): id is string => Boolean(id));
+  return result.hits.hits
+    .map((hit) => hit._id)
+    .filter((id): id is string => Boolean(id));
   }
 }

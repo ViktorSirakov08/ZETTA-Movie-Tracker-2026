@@ -47,7 +47,7 @@ export class Media {
 
   @ManyToMany(() => Genre, (genre) => genre.media, { eager: true })
   @JoinTable({
-    name: 'media_genres', // the actual join table name in Postgres
+    name: 'media_genres',
     joinColumn: { name: 'media_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'genre_id', referencedColumnName: 'id' },
   })
@@ -55,7 +55,7 @@ export class Media {
 
   @ManyToMany(() => Interest, (interest) => interest.media, { eager: true })
   @JoinTable({
-    name: 'interest_to_media', // the actual join table name in Postgres
+    name: 'interest_to_media',
     joinColumn: { name: 'media_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'interest_id', referencedColumnName: 'id' },
   })
