@@ -42,7 +42,11 @@ export class MediaReleaseNotificationService implements OnModuleInit {
     await this.queueTodayReleaseNotifications();
   }
 
-  @Cron('5 0 * * *', {
+  // Sped up to every minute for demo purposes so a newly-released title's
+  // email can actually be shown firing live, instead of waiting for the
+  // real daily schedule. Revert to '5 0 * * *' (once a day, 00:05 Sofia
+  // time) afterward.
+  @Cron('* * * * *', {
     timeZone: 'Europe/Sofia',
   })
   async queueDailyReleaseNotifications(): Promise<void> {

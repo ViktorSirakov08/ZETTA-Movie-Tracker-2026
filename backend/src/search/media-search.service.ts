@@ -71,7 +71,9 @@ export class MediaSearchService implements OnModuleInit {
     });
   }
 
-  async reindexAll(mediaList: Media[]): Promise<{ indexed: number; failed: number; errors: unknown[] }> {
+  async reindexAll(
+    mediaList: Media[],
+  ): Promise<{ indexed: number; failed: number; errors: unknown[] }> {
     if (mediaList.length === 0) {
       return { indexed: 0, failed: 0, errors: [] };
     }
@@ -85,7 +87,10 @@ export class MediaSearchService implements OnModuleInit {
 
     if (response.errors) {
       const failedItems = response.items.filter((item) => item.index?.error);
-      this.logger.error(`Reindex had ${failedItems.length} failures`, failedItems);
+      this.logger.error(
+        `Reindex had ${failedItems.length} failures`,
+        failedItems,
+      );
       return {
         indexed: mediaList.length - failedItems.length,
         failed: failedItems.length,
@@ -109,24 +114,25 @@ export class MediaSearchService implements OnModuleInit {
    * `match_all` + filter.
    */
   async searchIds(params: {
-  query?: string;
-  genre?: string;
-  interests?: string[];
-}): Promise<string[]> {
-  const trimmedQuery = params.query?.trim();
+    query?: string;
+    genre?: string;
+    interests?: string[];
+  }): Promise<string[]> {
+    const trimmedQuery = params.query?.trim();
 
-  const filter: Record<string, unknown>[] = [];
-  if (params.genre) {
-    filter.push({ term: { genres: params.genre } });
-  }
-  if (params.interests?.length) {
-    filter.push({ terms: { interests: params.interests } });
-  }
+    const filter: Record<string, unknown>[] = [];
+    if (params.genre) {
+      filter.push({ term: { genres: params.genre } });
+    }
+    if (params.interests?.length) {
+      filter.push({ terms: { interests: params.interests } });
+    }
 
-    // Two clauses, either one is enough to match (should / minimum_should_match: 1):
+    // Three clauses, any one match is enough (should / minimum_should_match: 1):
     // bool_prefix keeps results appearing live as the user types correctly,
-    // while the second, fuzzy clause catches queries with a typo that would
-    // never be a valid prefix of anything. Neither alone covers both cases.
+    // the fuzzy clause catches queries with a typo that would never be a
+    // valid prefix of anything, and the plain description match is a
+    // secondary target for matching keywords written inside descriptions.
     const must = trimmedQuery
       ? [
           {
@@ -147,32 +153,27 @@ export class MediaSearchService implements OnModuleInit {
                     fuzziness: 'AUTO' as const,
                   },
                 },
+                {
+                  match: {
+                    description: {
+                      query: trimmedQuery,
+                    },
+                  },
+                },
               ],
               minimum_should_match: 1,
             },
-            // 2. Secondary target: Let them search keywords inside descriptions
-            {
-              match: {
-                description: {
-                  query: trimmedQuery
-                }
-              }
-            }
-          ]
-        }
-      }
-    ];
-  } else {
-    must = [{ match_all: {} }];
-  }
+          },
+        ]
+      : [{ match_all: {} }];
 
-  const result = await this.es.search<MediaSearchDocument>({
-    index: MEDIA_INDEX,
-    query: { bool: { must, filter } },
-  });
+    const result = await this.es.search<MediaSearchDocument>({
+      index: MEDIA_INDEX,
+      query: { bool: { must, filter } },
+    });
 
-  return result.hits.hits
-    .map((hit) => hit._id)
-    .filter((id): id is string => Boolean(id));
+    return result.hits.hits
+      .map((hit) => hit._id)
+      .filter((id): id is string => Boolean(id));
   }
 }
