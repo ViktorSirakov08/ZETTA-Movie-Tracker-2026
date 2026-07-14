@@ -89,19 +89,7 @@ export class MediaService {
   }
 
   async create(dto: CreateMediaDto): Promise<Media> {
-    const {
-      genreIds,
-      interestIds,
-      interestNames,
-      ageRestricted,
-      ageRestricted13,
-      ...rest
-    } = dto;
-
-    const ageRestriction = rest.ageRestriction ??
-      (ageRestricted ? AgeRestriction.PG18 :
-      ageRestricted13 ? AgeRestriction.PG13 :
-      AgeRestriction.NONE);
+    const { genreIds, interestIds, interestNames, ...rest } = dto;
 
     const genres = await this.genreRepo.findBy({ id: In(genreIds) });
     let interests: Interest[] = [];
@@ -113,7 +101,6 @@ export class MediaService {
 
     const media = this.mediaRepo.create({
       ...rest,
-      ageRestriction,
       genres,
       interests,
       rating: null, // always starts as "No Rating"
@@ -125,23 +112,9 @@ export class MediaService {
 
   async update(id: string, dto: UpdateMediaDto): Promise<Media> {
     const media = await this.findOne(id);
-    const {
-      genreIds,
-      interestIds,
-      ageRestricted,
-      ageRestricted13,
-      ...rest
-    } = dto;
-
-    const ageRestriction = rest.ageRestriction ??
-      (ageRestricted ? AgeRestriction.PG18 :
-      ageRestricted13 ? AgeRestriction.PG13 :
-      undefined);
+    const { genreIds, interestIds, ...rest } = dto;
 
     Object.assign(media, rest);
-    if (ageRestriction !== undefined) {
-      media.ageRestriction = ageRestriction;
-    }
 
     if (genreIds !== undefined) {
       media.genres = await this.genreRepo.findBy({ id: In(genreIds) });
@@ -540,10 +513,9 @@ export class MediaService {
       .filter((media): media is Media => Boolean(media));
   }
 
-  async reindexAll(): Promise<{ indexed: number }> {
+  async reindexAll(): Promise<{ indexed: number; failed: number; errors: unknown[] }> {
     const allMedia = await this.mediaRepo.find();
-    const indexed = await this.mediaSearchService.reindexAll(allMedia);
-    return { indexed };
+    return this.mediaSearchService.reindexAll(allMedia);
   }
 }
 
