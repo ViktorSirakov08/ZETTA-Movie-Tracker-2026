@@ -43,14 +43,6 @@ export class CreateMediaDto {
   @IsIn(INTEREST_NAMES, { each: true })
   interestNames?: string[];
 
-  @IsOptional()
-  @IsBoolean()
-  ageRestricted?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  ageRestricted13?: boolean;
-
   @IsEnum(AgeRestriction)
   ageRestriction!: AgeRestriction;
 
