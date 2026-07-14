@@ -364,11 +364,14 @@ export function MediaDetailPage() {
       </button>
 
       <div className="detail-layout">
-        <div className="detail-poster">
+        <div className={`detail-poster ${isUnreleased ? 'media-poster--blurred' : ''}`}>
           {media.posterUrl ? (
             <img src={media.posterUrl} alt={media.name} />
           ) : (
             <span className="poster-label">Picture</span>
+          )}
+          {isUnreleased && (
+            <div className="unreleased-overlay-badge">Coming Soon</div>
           )}
         </div>
 
